@@ -1,13 +1,43 @@
 #include "ristretto255.h"
 
-static void unpack25519(field_elem out, const u8 *in)
+
+/*		UTILS		*/
+void print(field_elem o){
+
+//	printf("PRINT: ");
+	for (int i=0;i<16;i++){
+		printf("%02hhx ", o[i]);
+		
+	}
+	printf("\n");
+}
+
+void print_32(const u8* o){
+
+//	printf("PRINT: ");
+	for (int i=0;i<32;i++){
+		printf("%02hhx ", o[i]);
+		
+	}
+	printf("\n");
+}
+
+/*-----------------------------------*/
+
+
+
+
+
+
+
+void unpack25519(field_elem out, const u8 *in)
 {
 int i;
 for (i = 0; i < 16; ++i) out[i] = in[2*i] + ((i64) in[2*i + 1] << 8);
 out[15] &= 0x7fff;
  }
 
- static void carry25519(field_elem elem)
+ void carry25519(field_elem elem)
  {
  int i;
  i64 carry;
@@ -18,19 +48,19 @@ out[15] &= 0x7fff;
  }
  }
 
- static void fadd(field_elem out, const field_elem a, const field_elem b) /* out = a + b */
+ void fadd(field_elem out, const field_elem a, const field_elem b) /* out = a + b */
  {
  int i;
  for (i = 0; i < 16; ++i) out[i] = a[i] + b[i];
  }
 
- static void fsub(field_elem out, const field_elem a, const field_elem b) /* out = a - b */
+ void fsub(field_elem out, const field_elem a, const field_elem b) /* out = a - b */
  {
  int i;
  for (i = 0; i < 16; ++i) out[i] = a[i] - b[i];
  }
 
- static void fmul(field_elem out, const field_elem a, const field_elem b) /* out = a * b */
+ void fmul(field_elem out, const field_elem a, const field_elem b) /* out = a * b */
  {
  i64 i, j, product[31];
  for (i = 0; i < 31; ++i) product[i] = 0;
@@ -43,7 +73,7 @@ out[15] &= 0x7fff;
  carry25519(out);
  }
 
-static void finverse(field_elem out, const field_elem in)
+void finverse(field_elem out, const field_elem in)
 {
 field_elem c;
 int i;
@@ -55,7 +85,7 @@ for (i = 0; i < 16; ++i) c[i] = in[i];
  for (i = 0; i < 16; ++i) out[i] = c[i];
  }
 
- static void swap25519(field_elem p, field_elem q, int bit)
+ void swap25519(field_elem p, field_elem q, int bit)
  {
  i64 t, i, c = ~(bit - 1);
  for (i = 0; i < 16; ++i) {
@@ -65,7 +95,7 @@ for (i = 0; i < 16; ++i) c[i] = in[i];
  }
  }
 
- static void pack25519(u8 *out, const field_elem in)
+ void pack25519(u8 *out, const field_elem in)
  {
  int i, j, carry;
  field_elem m, t;
@@ -88,6 +118,8 @@ for (i = 0; i < 16; ++i) c[i] = in[i];
  }
  }
 
+
+const field_elem _121665 = {0xDB41, 1};
 
 void scalarmult(u8 *out, const u8 *scalar, const u8 *point)
 {
@@ -132,3 +164,197 @@ field_elem a, b, c, d, e, f, x;
  fmul(a, a, c);
  pack25519(out, a);
  }
+
+/* ------------------------------------------------*/
+/* -------------------my code----------------------*/
+/* ------------------------------------------------*/
+
+
+ // square a˘2
+
+ void pow2(field_elem out, const field_elem a){
+ 	fmul(out,a,a);
+ }
+
+ 
+// square a˘3
+void pow3(field_elem out, const field_elem a){
+ 	field_elem a2;
+ 	// temporary: a^2
+ 	pow2(a2,a);
+
+ 	// a^3
+ 	fmul(out,a2,a);
+}
+
+
+void pow7(field_elem out, const field_elem a){
+ 	field_elem a3, a6;
+ 	pow3(a3,a);
+ 	pow2(a6,a3);
+ 	fmul(out,a6,a);
+}
+
+// not efficient but can calc a^n
+void pow_xtimes(field_elem out, const field_elem a, int n){
+	field_elem temp;
+	fmul(temp,a,a);
+	for (int i = 0; i < n-2; ++i)
+	{
+		fmul(temp,temp,a);
+	}
+	fmul(out,temp,a);
+
+}
+
+// * In:  b =   2^5 - 2^0
+// * Out: b = 2^250 - 2^0
+// this function is needed to calc z^(2^252 - 3)
+// more specific, output of this function is z^(2^250 - 2^0)
+// note that input of function is NOT "z", but rather z^(2^5 - 2^0)
+// in other words, input z^31 == z^(2^5 - 2^0) 
+// inspired by:
+// https://github.com/floodyberry/ed25519-donna/blob/master/curve25519-donna-helpers.h
+void curve25519_pow_two5mtwo0_two250mtwo0(field_elem b){
+	field_elem t0,c;
+
+	/* 2^5  - 2^0 */ /* b */
+	/* 2^10 - 2^5 */ pow_xtimes(t0, b, 5);
+	/* 2^10 - 2^0 */ fmul(b, t0, b);
+	/* 2^20 - 2^10 */ pow_xtimes(t0, b, 10);
+	/* 2^20 - 2^0 */ fmul(c, t0, b);
+	/* 2^40 - 2^20 */ pow_xtimes(t0, c, 20);
+	/* 2^40 - 2^0 */ fmul(t0, t0, c);
+	/* 2^50 - 2^10 */ pow_xtimes(t0, t0, 10);
+	/* 2^50 - 2^0 */ fmul(b, t0, b);
+	/* 2^100 - 2^50 */ pow_xtimes(t0, b, 50);
+	/* 2^100 - 2^0 */ fmul(c, t0, b);
+	/* 2^200 - 2^100 */ pow_xtimes(t0, c, 100);
+	/* 2^200 - 2^0 */ fmul(t0, t0, c);
+	/* 2^250 - 2^50 */ pow_xtimes(t0, t0, 50);
+	/* 2^250 - 2^0 */ fmul(b, t0, b);
+
+}
+
+// this function calc: 
+// z^((p-5)/8) = z^(2^252 - 3)
+// needed for ristretto255 inv_sqrt
+void curve25519_pow_two252m3(field_elem two252m3, const field_elem z){
+	field_elem b,c,t0;
+
+	/* 2 */ pow_xtimes(c, z, 6); /* c = 2 */
+	/* 8 */ pow_xtimes(t0, c, 2); /* t0 = 8 */
+	/* 9 */ fmul(b, t0, z); /* b = 9 */
+	/* 11 */ fmul(c, b, c); /* c = 11 */
+	/* 22 */ pow_xtimes(t0, c, 1);
+	/* 2^5 - 2^0 = 31 */ fmul(b, t0, b);
+	/* 2^250 - 2^0 */ curve25519_pow_two5mtwo0_two250mtwo0(b);
+	/* 2^252 - 2^2 */ pow_xtimes(b, b, 2);
+	/* 2^252 - 3 */ fmul(two252m3, b, z);
+}
+
+
+
+// function that calc ristretto255 inverse square root
+// https://ristretto.group/formulas/invsqrt.html
+
+
+// output: (u*v^3) * (u*v^7) ^ {(p-5)/8}
+// (p-5)/8 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD => 7237005577332262213973186563042994240829374041602535252466099000494570602493
+// but also:
+// z^((p-5)/8) = z^(2^252 - 3)
+// code inspired by:
+// https://github.com/isislovecruft/ristretto-donna/blob/master/src/ristretto-donna.c#L97
+void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
+	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check;
+	
+	pow3(v3,v); 							//v^3
+	pow7(v7,v); 							//v^7
+	fmul(st_bracket,u,v3);					// (u*v^3)
+	fmul(nd_bracket,u,v7);					// (u*v^7)
+	curve25519_pow_two252m3(r,nd_bracket); 	// r = (u*v^7) ^ {(p-5)/8}
+
+	printf("\nPrint YYY_before::");
+	print(r); 
+	print(st_bracket); 
+
+	fmul(r2,r,st_bracket);					// r2 = (u*v^3) * (u*v^7) ^ {(p-5)/8}
+
+	printf("\nPrint YYY:");
+	print(r2); 
+	
+
+	pow2(temp2,r2);							// tmp = r2 ^ 2 -> needed for check
+	fmul(check,v,temp2);					// check = (r2 ^ 2) * v
+
+	// prints
+	printf("\nPrint r:");
+	print(r);
+
+	printf("\nPrint check:");
+	print(check);
+
+	// dummy output
+	fmul(out,v,v);
+
+	/*
+
+	// additional vars
+	field_elem u_neg, u_neg_i;
+
+	// assaign vars
+	correct_sign_sqrt = bignum25519_ct_eq(check, u);
+  	flipped_sign_sqrt = bignum25519_ct_eq(check, u_neg);
+  	flipped_sign_sqrt_i = bignum25519_ct_eq(check, u_neg_i);
+
+	
+	// negation
+	// fneg(u_neg, u);
+	// fmul(u_neg_i, u_neg, SQRT_M1);
+
+	// fmul(r_prime, r, SQRT_M1);
+	// conditional swap
+	// swap25519(r, r_prime, should_rotate)
+
+	*/
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

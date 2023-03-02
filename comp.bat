@@ -1,0 +1,1 @@
+gcc -o main main.c ristretto255.c && main.exe
