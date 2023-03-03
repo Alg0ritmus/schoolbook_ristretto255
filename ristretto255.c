@@ -169,6 +169,25 @@ field_elem a, b, c, d, e, f, x;
 /* -------------------my code----------------------*/
 /* ------------------------------------------------*/
 
+void fcopy(field_elem out, const field_elem in){
+	out[0]  = in[0];
+	out[1]  = in[1];
+	out[2]  = in[2];
+	out[3]  = in[3];
+	out[4]  = in[4];
+	out[5]  = in[5];
+	out[6]  = in[6];
+	out[7]  = in[7];
+	out[8]  = in[8];
+	out[9]  = in[9];
+	out[10] = in[10];
+	out[11] = in[11];
+	out[12] = in[12];
+	out[13] = in[13];
+	out[14] = in[14];
+	out[15] = in[15];
+
+}
 
  // square a˘2
 
@@ -195,15 +214,14 @@ void pow7(field_elem out, const field_elem a){
  	fmul(out,a6,a);
 }
 
-// not efficient but can calc a^n
+// not efficient but can calc a^ (2 * n)
 void pow_xtimes(field_elem out, const field_elem a, int n){
-	field_elem temp;
-	fmul(temp,a,a);
-	for (int i = 0; i < n-2; ++i)
+	fcopy(out,a);
+	for (int i = 0; i < n; ++i)
 	{
-		fmul(temp,temp,a);
+		pow2(out,out);
 	}
-	fmul(out,temp,a);
+	
 
 }
 
@@ -242,7 +260,7 @@ void curve25519_pow_two5mtwo0_two250mtwo0(field_elem b){
 void curve25519_pow_two252m3(field_elem two252m3, const field_elem z){
 	field_elem b,c,t0;
 
-	/* 2 */ pow_xtimes(c, z, 6); /* c = 2 */
+	/* 2 */ pow_xtimes(c, z, 1); /* c = 2 */
 	/* 8 */ pow_xtimes(t0, c, 2); /* t0 = 8 */
 	/* 9 */ fmul(b, t0, z); /* b = 9 */
 	/* 11 */ fmul(c, b, c); /* c = 11 */
@@ -274,14 +292,9 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	fmul(nd_bracket,u,v7);					// (u*v^7)
 	curve25519_pow_two252m3(r,nd_bracket); 	// r = (u*v^7) ^ {(p-5)/8}
 
-	printf("\nPrint YYY_before::");
-	print(r); 
-	print(st_bracket); 
-
 	fmul(r2,r,st_bracket);					// r2 = (u*v^3) * (u*v^7) ^ {(p-5)/8}
 
-	printf("\nPrint YYY:");
-	print(r2); 
+
 	
 
 	pow2(temp2,r2);							// tmp = r2 ^ 2 -> needed for check
@@ -293,6 +306,9 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 
 	printf("\nPrint check:");
 	print(check);
+
+	printf("\nPrint expected_check:");
+	print(u);
 
 	// dummy output
 	fmul(out,v,v);

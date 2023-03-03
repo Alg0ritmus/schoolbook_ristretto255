@@ -22,6 +22,7 @@ void pack25519(u8 *out, const field_elem in);
 void scalarmult(u8 *out, const u8 *scalar, const u8 *point);
 
 // mine funkcie
+void fcopy(field_elem out, const field_elem in);
 void pow2(field_elem out, const field_elem a);
 void pow3(field_elem out, const field_elem a);
 void pow7(field_elem out, const field_elem a);
