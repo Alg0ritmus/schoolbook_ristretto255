@@ -169,6 +169,35 @@ field_elem a, b, c, d, e, f, x;
 /* -------------------my code----------------------*/
 /* ------------------------------------------------*/
 
+// return 1 if they're equal
+int feq( const field_elem a,  const field_elem b){
+	int result = 1;
+
+	// constant time
+	result &= a[0] == b[0];
+	result &= a[1] == b[1];
+	result &= a[2] == b[2];
+	result &= a[3] == b[3];
+
+	result &= a[4] == b[4];
+	result &= a[5] == b[5];
+	result &= a[6] == b[6];
+	result &= a[7] == b[7];
+
+	result &= a[8] == b[8];
+	result &= a[9] == b[9];
+	result &= a[10] == b[10];
+	result &= a[11] == b[11];
+
+	result &= a[12] == b[12];
+	result &= a[13] == b[13];
+	result &= a[14] == b[14];
+	result &= a[15] == b[15];
+
+
+	return result;
+}
+
 void fcopy(field_elem out, const field_elem in){
 	out[0]  = in[0];
 	out[1]  = in[1];

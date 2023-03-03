@@ -1,5 +1,7 @@
 #include "ristretto255.h"
 
+
+
 int main(){
 
 	const u8 in[32] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,255,255};
@@ -29,18 +31,10 @@ int main(){
 	print(tx8);
 	print(t8);
 
+	int skuska = feq(tx8,t8);
+	printf("skuska:%d\n",skuska );
+
 	return 0;
 }
 
 
-/*
-
-echo "# schoolbook_ristretto255" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/Alg0ritmus/schoolbook_ristretto255.git
-git push -u origin main
-
-*/
