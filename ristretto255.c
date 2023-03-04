@@ -1,6 +1,5 @@
 #include "ristretto255.h"
 
-
 /*		UTILS		*/
 void print(field_elem o){
 
@@ -25,8 +24,17 @@ void print_32(const u8* o){
 /*-----------------------------------*/
 
 
+// little-endian order --> a = a0*2^0 + a1*2^16 + a2*2^32 + ... + a15*2^240 (vzdy o ax*2^ o15 vyssie)
+const field_elem F_ZERO = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+const field_elem F_ONE = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+const field_elem F_BIGGEST = {	32767,32767,32767,32767,
+								32767,32767,32767,32767,
+								32767,32767,32767,32767,
+								32767,32767,32767,32767
+};
 
+const field_elem _121665 = {0xDB41, 1};
 
 
 
@@ -119,7 +127,6 @@ for (i = 0; i < 16; ++i) c[i] = in[i];
  }
 
 
-const field_elem _121665 = {0xDB41, 1};
 
 void scalarmult(u8 *out, const u8 *scalar, const u8 *point)
 {
@@ -198,6 +205,7 @@ int feq( const field_elem a,  const field_elem b){
 	return result;
 }
 
+// copy in to out
 void fcopy(field_elem out, const field_elem in){
 	out[0]  = in[0];
 	out[1]  = in[1];
@@ -217,6 +225,11 @@ void fcopy(field_elem out, const field_elem in){
 	out[15] = in[15];
 
 }
+
+// negation of element a -> 0-a = -a
+void fneg(field_elem out, const field_elem in){
+	fsub(out, F_ZERO, in);
+};
 
  // square a˘2
 
@@ -313,8 +326,16 @@ void curve25519_pow_two252m3(field_elem two252m3, const field_elem z){
 // code inspired by:
 // https://github.com/isislovecruft/ristretto-donna/blob/master/src/ristretto-donna.c#L97
 void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
-	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check;
-	
+	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check, u_neg,u_neg_i, r_prime;
+	int r_is_negative;
+	int correct_sign_sqrt;
+	int flipped_sign_sqrt;
+	int flipped_sign_sqrt_i;
+	int was_nonzero_square;
+	int should_rotate;
+
+
+
 	pow3(v3,v); 							//v^3
 	pow7(v7,v); 							//v^7
 	fmul(st_bracket,u,v3);					// (u*v^3)
@@ -329,15 +350,27 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	pow2(temp2,r2);							// tmp = r2 ^ 2 -> needed for check
 	fmul(check,v,temp2);					// check = (r2 ^ 2) * v
 
-	// prints
-	printf("\nPrint r:");
-	print(r);
-
+	// Check if everything is correct: check == u ?
 	printf("\nPrint check:");
 	print(check);
 
 	printf("\nPrint expected_check:");
 	print(u);
+
+
+	fneg(u_neg,u);
+	//fmul(u_neg_i,u_neg,SQRT_M1);
+
+	//correct_sign_sqrt = feq(check, u);
+  	//flipped_sign_sqrt = feq(check, u_neg);
+  	//flipped_sign_sqrt_i = feq(check, u_neg_i);
+
+  	//fmul(r_prime, r2, SQRT_M1);
+	//should_rotate = flipped_sign_sqrt | flipped_sign_sqrt_i;
+	//curve25519_swap_conditional(r2, r_prime, should_rotate);
+
+
+
 
 	// dummy output
 	fmul(out,v,v);
