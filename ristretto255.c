@@ -36,6 +36,21 @@ const field_elem F_BIGGEST = {	32767,32767,32767,32767,
 
 const field_elem _121665 = {0xDB41, 1};
 
+// 2^255 - 19 -> from script convert_num_to_bernstein.py
+const field_elem F_MODULUS = {
+	0xffed, 0xffff, 0xffff, 0xffff,
+	0xffff, 0xffff, 0xffff, 0xffff,
+	0xffff, 0xffff, 0xffff, 0xffff,
+	0xffff, 0xffff, 0xffff, 0x7fff
+}
+
+
+const field_elem SQRT_M1 = {
+	0xa0b0, 0x4a0e, 0x1b27, 0xc4ee,
+	0xe478, 0xad2f, 0x1806, 0x2f43,
+	0xd7a7, 0x3dfb, 0x99, 	0x2b4d,
+	0xdf0b, 0x4fc1, 0x2480, 0x2b83
+}
 
 
 void unpack25519(field_elem out, const u8 *in)
@@ -93,6 +108,7 @@ for (i = 0; i < 16; ++i) c[i] = in[i];
  for (i = 0; i < 16; ++i) out[i] = c[i];
  }
 
+// if bit = 1 -> swap, otherwise do nothing
  void swap25519(field_elem p, field_elem q, int bit)
  {
  i64 t, i, c = ~(bit - 1);
@@ -226,10 +242,24 @@ void fcopy(field_elem out, const field_elem in){
 
 }
 
-// negation of element a -> 0-a = -a
+// negation of element a -> 0-a = -a 
+// inspired by: https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_51.h#L94
+
+// alebo zmenit na :
+// https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_25_5.h#L116
 void fneg(field_elem out, const field_elem in){
-	fsub(out, F_ZERO, in);
+	fsub(out, F_MODULUS, in);
 };
+
+// https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_25_5.h#L302
+int is_neg(const field_elem in){
+	u8 temp[32];
+	pack25519(temp, in);
+
+	return s[0] & 1;
+}
+
+
 
  // square a˘2
 
@@ -359,42 +389,41 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 
 
 	fneg(u_neg,u);
-	//fmul(u_neg_i,u_neg,SQRT_M1);
+	fmul(u_neg_i,u_neg,SQRT_M1);
 
-	//correct_sign_sqrt = feq(check, u);
-  	//flipped_sign_sqrt = feq(check, u_neg);
-  	//flipped_sign_sqrt_i = feq(check, u_neg_i);
+	correct_sign_sqrt = feq(check, u);
+  	flipped_sign_sqrt = feq(check, u_neg);
+  	flipped_sign_sqrt_i = feq(check, u_neg_i);
 
-  	//fmul(r_prime, r2, SQRT_M1);
-	//should_rotate = flipped_sign_sqrt | flipped_sign_sqrt_i;
-	//curve25519_swap_conditional(r2, r_prime, should_rotate);
+  	printf("correct_sign_sqrt = %d\n", correct_sign_sqrt);
+  	printf("flipped_sign_sqrt = %d\n", flipped_sign_sqrt);
+  	printf("flipped_sign_sqrt_i = %d\n", flipped_sign_sqrt_i);
 
+  	fmul(r_prime, r2, SQRT_M1);
+	should_rotate = flipped_sign_sqrt | flipped_sign_sqrt_i;
+	swap25519(r2, r_prime, should_rotate);
 
-
-
-	// dummy output
-	fmul(out,v,v);
-
+	// Choose the non-negative square root
 	/*
+	trosku problem, ako viem ze field_elem je negative number ?
 
-	// additional vars
-	field_elem u_neg, u_neg_i;
+	curve25519_contract(r_bytes, r);
+	r_is_negative = bignum25519_is_negative(r_bytes);
+	curve25519_neg(r_negative, r);
+	curve25519_swap_conditional(r, r_negative, r_is_negative);
+	PRINT("r = "); fe_print(r);
 
-	// assaign vars
-	correct_sign_sqrt = bignum25519_ct_eq(check, u);
-  	flipped_sign_sqrt = bignum25519_ct_eq(check, u_neg);
-  	flipped_sign_sqrt_i = bignum25519_ct_eq(check, u_neg_i);
+	was_nonzero_square = correct_sign_sqrt | flipped_sign_sqrt;
+	PRINT("was_nonzero_square = %d", was_nonzero_square);
 
-	
-	// negation
-	// fneg(u_neg, u);
-	// fmul(u_neg_i, u_neg, SQRT_M1);
-
-	// fmul(r_prime, r, SQRT_M1);
-	// conditional swap
-	// swap25519(r, r_prime, should_rotate)
+	curve25519_copy(out, r);
 
 	*/
+
+
+	// output
+	fcopy(out,r2);
+
 }
 
 
