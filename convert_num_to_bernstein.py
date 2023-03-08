@@ -10,11 +10,11 @@ D_MINUS_ONE_SQ = 404408343463085368581010424693231908262483991462387083522401332
 P = (2**255)-19 
 
 # select number you want to convert to hex repr.
-BIG_NUMBER = P
+BIG_NUMBER = D
 
 # choose between 16 or 32 element representation (just uncomment preferable option) 
-interpret= [32,8]
-#interpret= [16,16]
+#interpret= [32,8]
+interpret= [16,16]
 sum = 0
 
 result=[]

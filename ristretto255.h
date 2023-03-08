@@ -7,13 +7,21 @@ typedef unsigned char u8;
 typedef long long i64;
 typedef i64 field_elem[16];
 
+typedef struct ge_point25519{
+	field_elem x,y,z,t;
+}ristretto255_point;
+
 
 
 // CONSTANTS
 extern const field_elem F_ZERO;
 extern const field_elem F_ONE;
+extern const field_elem F_TWO;
 extern const field_elem F_BIGGEST;
 extern const field_elem _121665;
+extern const field_elem F_MODULUS;
+extern const field_elem SQRT_M1;
+extern const field_elem EDWARDS_D;
 
 
 void print(field_elem o);
@@ -42,9 +50,17 @@ void curve25519_pow_two5mtwo0_two250mtwo0(field_elem b);
 void curve25519_pow_two252m3(field_elem two252m3, const field_elem z);
 void inv_sqrt(field_elem out,const field_elem u, const field_elem v);
 int feq( const field_elem a,  const field_elem b); // return 1 if two are equal, otherwise 0
+int bytes_eq_32( const unsigned char a[32],  const unsigned char b[32]); // return 1 if two are equal, otherwise 0
+
+// funguje???
+void fneg(field_elem out, const field_elem in);
+int is_neg(const field_elem in); // return 1 if it's negative
 
 // is negative ?
 // https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_51.h#L243
+
+// ristretto functions
+int ristretto255_decode(ristretto255_point *ristretto_out, const unsigned char bytes_in[32]);
 
 
 #endif //_RISTRETTO255_H

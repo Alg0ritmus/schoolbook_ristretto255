@@ -27,6 +27,7 @@ void print_32(const u8* o){
 // little-endian order --> a = a0*2^0 + a1*2^16 + a2*2^32 + ... + a15*2^240 (vzdy o ax*2^ o15 vyssie)
 const field_elem F_ZERO = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 const field_elem F_ONE = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+const field_elem F_TWO = {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 const field_elem F_BIGGEST = {	32767,32767,32767,32767,
 								32767,32767,32767,32767,
@@ -42,7 +43,7 @@ const field_elem F_MODULUS = {
 	0xffff, 0xffff, 0xffff, 0xffff,
 	0xffff, 0xffff, 0xffff, 0xffff,
 	0xffff, 0xffff, 0xffff, 0x7fff
-}
+};
 
 
 const field_elem SQRT_M1 = {
@@ -50,7 +51,15 @@ const field_elem SQRT_M1 = {
 	0xe478, 0xad2f, 0x1806, 0x2f43,
 	0xd7a7, 0x3dfb, 0x99, 	0x2b4d,
 	0xdf0b, 0x4fc1, 0x2480, 0x2b83
-}
+};
+
+const field_elem EDWARDS_D = {
+	0x78a3, 0x1359, 0x4dca, 0x75eb,
+	0xd8ab, 0x4141, 0xa4d, 0x70,
+	0xe898, 0x7779, 0x4079, 0x8cc7,
+	0xfe73, 0x2b6f, 0x6cee, 0x5203
+
+};
 
 
 void unpack25519(field_elem out, const u8 *in)
@@ -221,6 +230,19 @@ int feq( const field_elem a,  const field_elem b){
 	return result;
 }
 
+
+// return 1 if they're equal
+int bytes_eq_32( const u8 a[32],  const u8 b[32]){
+	int result = 1;
+
+	for (int i = 0; i < 32; ++i){
+		result &= a[i] == b[i];
+		printf("a=%02hhx| b=%02hhx \n",a[i],b[i] );
+	}
+
+	return result;
+}
+
 // copy in to out
 void fcopy(field_elem out, const field_elem in){
 	out[0]  = in[0];
@@ -256,7 +278,7 @@ int is_neg(const field_elem in){
 	u8 temp[32];
 	pack25519(temp, in);
 
-	return s[0] & 1;
+	return temp[0] & 1;
 }
 
 
@@ -426,6 +448,88 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 
 }
 
+
+/*
+
+typedef struct ge_point25519{
+	field_elem x,y,z,t;
+}ristretto255_point;
+
+*/
+
+// generate ristretto point from bytes[32]
+int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]){
+	
+	// temp vars
+	field_elem s, ss, u1, u2, uu1, uu2, duu1, v, vuu2, I, Dx, Dxv,Dy, sDx;
+
+	// cords
+	field_elem x, abs_x ,y,t;
+
+	int is_canonical, is_negative;
+
+	u8 checked_bytes[32];
+
+	// Step 1: Check that the encoding of the field element is canonical
+	unpack25519(s, bytes_in);
+	pack25519(checked_bytes,s);
+
+	// check if bytes_in == checked_bytes, else abort
+	is_canonical = bytes_eq_32(checked_bytes,bytes_in);
+	is_negative = is_neg(s);
+
+	if (is_canonical == 0 || is_negative==1){
+		printf("Bad encoding or neg bytes passed to the ristretto255_decode function! is_canonical=%d, is_negative=%d\n",is_canonical,is_negative);
+		return 0;
+	}
+
+	// Step 2 calc ristretto255/ge25519 point
+	// a = ± 1
+	pow2(ss,s);
+	fadd(u1,F_ONE,ss); // 1 + as^2
+	fsub(u2,F_ONE,ss); // 1 - as^2
+
+	pow2(uu1,u1);
+	pow2(uu2,u2);
+
+	// d -> from ristretto darft
+
+	fmul(duu1,EDWARDS_D,uu2); // a*d*u1^2
+	fsub(v,duu1,uu2); // adu1^2 - u2^2
+
+	fmul(vuu2,v,uu2); // v*u2^2
+
+
+
+	inv_sqrt(I,F_ONE,vuu2);
+
+	fmul(Dx,I,u2); // I*u2
+	fmul(Dxv, Dx, v); // Dx * v
+	fmul(Dy, I, Dxv); // I*Dx*v
+
+	// cords
+	// x: |2sDx|
+	fmul(sDx,s,Dx);
+	fadd(x,sDx,sDx); // 2sDx
+
+	if (is_neg(x)){
+		fneg(abs_x,x); // |2sDx|
+	}
+
+	// y: u1Dy
+	fmul(y,u1,Dy);
+
+	// t: x,y
+	fmul(t,x,y);
+
+
+	// fill the struct
+	fcopy(ristretto_out->x, abs_x);
+	fcopy(ristretto_out->y, y);
+	fcopy(ristretto_out->z, F_ONE);
+	fcopy(ristretto_out->t, t); 
+	return 1;
+}
 
 
 

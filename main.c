@@ -4,7 +4,7 @@
 
 int main(){
 
-	const u8 in[32] = {1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,255,255};
+	const u8 in[32] = {2,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16};
 	field_elem out;
 	field_elem inv_sq_field_elem;
 
@@ -40,6 +40,14 @@ int main(){
 	fcopy(A,_121665);
 	pack25519(A_pack,A);
 	print_32(A_pack);
+
+	ristretto255_point *temp_rp;
+	ristretto255_decode(&temp_rp, in);
+	printf("point cords \n");
+	print(&temp_rp->x);
+	print(&temp_rp->y);
+	print(&temp_rp->z);
+	print(&temp_rp->t);
 
 	
 
