@@ -37,6 +37,7 @@ int main(){
 	
 	field_elem A;
 	u8 A_pack[32];
+	u8 A_pack_out[32];
 	fcopy(A,_121665);
 	pack25519(A_pack,A);
 	print_32(A_pack);
@@ -48,6 +49,13 @@ int main(){
 	print(&temp_rp->y);
 	print(&temp_rp->z);
 	print(&temp_rp->t);
+
+
+	printf("\nA_pack_out before encoding:\n");
+	print_32(A_pack_out);
+	ristretto255_encode(A_pack_out, temp_rp);
+	printf("\nA_pack_out after encoding:\n");
+	print_32(A_pack_out);
 
 	
 

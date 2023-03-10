@@ -61,6 +61,13 @@ const field_elem EDWARDS_D = {
 
 };
 
+const field_elem INVSQRT_A_MINUS_D  = {
+	0x40ea, 0x805d, 0xfdaa, 0x99c8,
+	0x72be, 0x5a41, 0x1617, 0x9d2f,
+	0xd840, 0xfe01, 0x7b91, 0x16c2,
+	0xfca2, 0xcfaf, 0x8905, 0x786c
+};
+
 
 void unpack25519(field_elem out, const u8 *in)
 {
@@ -532,6 +539,68 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 }
 
 
+
+int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point *ristretto_in){
+
+	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2,D, D1D2,Zinv, TZinv, ix,iy,xZiv,_y, z_y,z_yD,s;
+
+	//
+	fadd(temp_zy1,&ristretto_in->z,&ristretto_in->y);
+	fsub(temp_zy2,&ristretto_in->z,&ristretto_in->y);
+	fmul(u1,temp_zy1,temp_zy2); // (Z+Y)(Z-Y)
+
+	fmul(u2,&ristretto_in->x,&ristretto_in->y); // XY
+
+	pow2(uu2,u2); //u2^2 
+	fmul(u1uu2,u1,uu2); // u1 * u2^2
+	inv_sqrt(I,F_ONE,u1uu2);
+
+	fmul(D1,u1,I); // u1 * I
+	fmul(D2,u2,I); // u2 * I
+
+
+	fmul(D1D2,D1,D2); // D1 * D2
+	fmul(Zinv,D1D2,&ristretto_in->t); // Zinv = D1*D2*T
+
+	fmul(TZinv,&ristretto_in->t,Zinv);
+
+	// mozno chybne??
+	if (is_neg(TZinv)){
+		fmul(ix,&ristretto_in->x,SQRT_M1); // ix = x*sqrt(-1)
+		fmul(iy,&ristretto_in->y,SQRT_M1); // iy = y*sqrt(-1)
+		fmul(D,D1,INVSQRT_A_MINUS_D); // D = D1/√(a-d)  -> 1/√(a-d) ->  INVSQRT_A_MINUS_D
+
+	}
+	/*
+	else{
+		// x = x
+		// y = y
+		// D = D2
+	}
+	*/
+
+	fmul(xZiv,&ristretto_in->z,Zinv);
+	if (is_neg(xZiv)){
+		fneg(_y,&ristretto_in->y); // -y
+		fcopy(&ristretto_in->y,_y); // y = -y
+	}
+
+	fsub(z_y ,&ristretto_in->z,&ristretto_in->y);
+	fmul(z_yD,z_y,D);
+
+	if (is_neg(z_yD)){
+		fneg(s,z_yD);
+	}
+
+	pack25519(bytes_out,s);
+
+	// if X*Zinv in_neg
+	// then y = - y
+
+
+
+	return 1;
+}
 
 
 

@@ -60,7 +60,8 @@ int is_neg(const field_elem in); // return 1 if it's negative
 // https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_51.h#L243
 
 // ristretto functions
-int ristretto255_decode(ristretto255_point *ristretto_out, const unsigned char bytes_in[32]);
 
+int ristretto255_decode(ristretto255_point *ristretto_out, const unsigned char bytes_in[32]);
+int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point *ristretto_in);
 
 #endif //_RISTRETTO255_H
