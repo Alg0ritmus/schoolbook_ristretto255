@@ -373,6 +373,51 @@ void curve25519_pow_two252m3(field_elem two252m3, const field_elem z){
 }
 
 
+// copied from:
+// https://github.com/sbp/tweetnacl-tools/blob/master/tweetnacl.c#L382
+#define FOR(i,n) for (i = 0;i < n;++i)
+#define sv static void
+
+sv car25519(field_elem o)
+{
+  int i;
+  i64 c;
+  FOR(i,16) {
+    o[i]+=(1LL<<16);
+    c=o[i]>>16;
+    o[(i+1)*(i<15)]+=c-1+37*(c-1)*(i==15);
+    o[i]-=c<<16;
+  }
+}
+
+sv M(field_elem o,const field_elem a,const field_elem b)
+{
+  i64 i,j,t[31];
+  FOR(i,31) t[i]=0;
+  FOR(i,16) FOR(j,16) t[i+j]+=a[i]*b[j];
+  FOR(i,15) t[i]+=38*t[i+16];
+  FOR(i,16) o[i]=t[i];
+  car25519(o);
+  car25519(o);
+}
+
+sv S(field_elem o,const field_elem a)
+{
+  M(o,a,a);
+}
+sv pow2523(field_elem o,const field_elem i)
+{
+  field_elem c;
+  int a;
+  FOR(a,16) c[a]=i[a];
+  for(a=250;a>=0;a--) {
+    S(c,c);
+    if(a!=1) M(c,c,i);
+  }
+  FOR(a,16) o[a]=c[a];
+}
+
+
 
 // function that calc ristretto255 inverse square root
 // https://ristretto.group/formulas/invsqrt.html
@@ -400,6 +445,7 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	fmul(st_bracket,u,v3);					// (u*v^3)
 	fmul(nd_bracket,u,v7);					// (u*v^7)
 	curve25519_pow_two252m3(r,nd_bracket); 	// r = (u*v^7) ^ {(p-5)/8}
+	//pow2523(r,nd_bracket);
 
 	fmul(r2,r,st_bracket);					// r2 = (u*v^3) * (u*v^7) ^ {(p-5)/8}
 

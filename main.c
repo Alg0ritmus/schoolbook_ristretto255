@@ -11,8 +11,12 @@ int main(){
 	unpack25519(out,in);
 	
 	printf("inv_sqrt( out, u, const, v)\n");
-	inv_sqrt(inv_sq_field_elem,out,out);
+	// out u v
+	inv_sqrt(inv_sq_field_elem,out,SQRT_M1);
+	print(inv_sq_field_elem);
 
+
+	/*
 	// TEST
 	field_elem t2, t4, t8, tx2, tx8;
 
@@ -57,7 +61,7 @@ int main(){
 	printf("\nA_pack_out after encoding:\n");
 	print_32(A_pack_out);
 
-	
+	*/
 
 	return 0;
 }
