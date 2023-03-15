@@ -5,7 +5,7 @@ void print(field_elem o){
 
 //	printf("PRINT: ");
 	for (int i=0;i<16;i++){
-		printf("%02hhx ", o[i]);
+		printf("%llx ", o[i]);
 		
 	}
 	printf("\n");
