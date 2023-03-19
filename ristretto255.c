@@ -271,13 +271,14 @@ void fcopy(field_elem out, const field_elem in){
 
 }
 
-// negation of element a -> 0-a = -a 
+// negation of element a -> p-a = -a 
 // inspired by: https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_51.h#L94
 
 // alebo zmenit na :
 // https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_25_5.h#L116
 void fneg(field_elem out, const field_elem in){
 	fsub(out, F_MODULUS, in);
+	carry25519(out);
 };
 
 // https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_25_5.h#L302
@@ -430,7 +431,8 @@ sv pow2523(field_elem o,const field_elem i)
 // code inspired by:
 // https://github.com/isislovecruft/ristretto-donna/blob/master/src/ristretto-donna.c#L97
 void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
-	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check, u_neg,u_neg_i, r_prime;
+	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check, u_neg,u_neg_i, r_prime,r_negative;
+	u8 r_bytes;
 	int r_is_negative;
 	int correct_sign_sqrt;
 	int flipped_sign_sqrt;
@@ -439,11 +441,22 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	int should_rotate;
 
 
-
 	pow3(v3,v); 							//v^3
 	pow7(v7,v); 							//v^7
+
+	printf("v3\n");
+	print(v3);
+	printf("v7\n");
+	print(v7);
+
 	fmul(st_bracket,u,v3);					// (u*v^3)
 	fmul(nd_bracket,u,v7);					// (u*v^7)
+
+	printf("st_bracket\n");
+	print(st_bracket);
+	printf("nd_bracket\n");
+	print(nd_bracket);
+
 	curve25519_pow_two252m3(r,nd_bracket); 	// r = (u*v^7) ^ {(p-5)/8}
 	//pow2523(r,nd_bracket);
 
@@ -456,12 +469,16 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	fmul(check,v,temp2);					// check = (r2 ^ 2) * v
 
 	// Check if everything is correct: check == u ?
+	
+	printf("\nPrint check IN:");
+	print(v);
+	
 	printf("\nPrint check:");
 	print(check);
 
-	printf("\nPrint expected_check:");
-	print(u);
-
+	//printf("\nPrint expected_check:");
+	//print(u);
+	
 
 	fneg(u_neg,u);
 	fmul(u_neg_i,u_neg,SQRT_M1);
@@ -470,30 +487,38 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
   	flipped_sign_sqrt = feq(check, u_neg);
   	flipped_sign_sqrt_i = feq(check, u_neg_i);
 
+  	/*
   	printf("correct_sign_sqrt = %d\n", correct_sign_sqrt);
   	printf("flipped_sign_sqrt = %d\n", flipped_sign_sqrt);
   	printf("flipped_sign_sqrt_i = %d\n", flipped_sign_sqrt_i);
+	*/
 
   	fmul(r_prime, r2, SQRT_M1);
 	should_rotate = flipped_sign_sqrt | flipped_sign_sqrt_i;
 	swap25519(r2, r_prime, should_rotate);
 
+	
 	// Choose the non-negative square root
-	/*
-	trosku problem, ako viem ze field_elem je negative number ?
 
-	curve25519_contract(r_bytes, r);
-	r_is_negative = bignum25519_is_negative(r_bytes);
-	curve25519_neg(r_negative, r);
-	curve25519_swap_conditional(r, r_negative, r_is_negative);
-	PRINT("r = "); fe_print(r);
+
+	r_is_negative = is_neg(r2);
+	fneg(r_negative, r2);
+	/*
+	printf("\nPrint check r:\n");
+	print(r2);
+	print(r_negative);
+	printf("r:%d r_negative ma byt pozitivne:%d\n",r_is_negative,is_neg(r_negative));
+	*/
+	swap25519(r2, r_negative, r_is_negative);
+
+
+	//printf("\n r2 after swap %d:\n",r_is_negative);
+	//print(r2);
 
 	was_nonzero_square = correct_sign_sqrt | flipped_sign_sqrt;
-	PRINT("was_nonzero_square = %d", was_nonzero_square);
+	//printf("\nwas_nonzero_square = %d\n", was_nonzero_square);
 
-	curve25519_copy(out, r);
 
-	*/
 
 
 	// output

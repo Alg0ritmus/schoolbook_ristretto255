@@ -128,7 +128,7 @@ numToHex(INPUT,NUMBER_INTERPRETATION_CHOICES["32x8"])
 print("\n")
 
 INPUT = P_HEX
-"""
+
 for i in range(len(HEX_ALL)):
 	print("HEX_"+str(i+1))
 	hexToNum(HEX_ALL[i],NUMBER_INTERPRETATION_CHOICES["32x8"])
@@ -137,3 +137,156 @@ for i in range(len(HEX_ALL)):
 
 for i in DEC_ALL:
 	numToHex(i,NUMBER_INTERPRETATION_CHOICES["32x8"])
+
+"""
+def fmul(a,b):
+	out = (a * b) % P
+	return out
+
+def pow_xtimes(a,n):
+	out = a
+	for i in range(n):
+		out=fmul(out,out)
+	return out
+
+
+def curve25519_pow_two5mtwo0_two250mtwo0(b):
+	t0 = 0
+	c = 0
+
+	t0 = pow_xtimes(b,5)
+	b = fmul(t0,b)
+	t0 = pow_xtimes(b,10)
+	c = fmul(t0,b)
+	t0 = pow_xtimes(c,20)
+	t0 = fmul(t0,c)
+	t0 = pow_xtimes(t0,10)
+	b = fmul(t0,b)
+	t0 = pow_xtimes(b,50)
+	c = fmul(t0,b)
+	t0 = pow_xtimes(c,100)
+	t0 = fmul(t0,c)
+	t0 = pow_xtimes(t0,50)
+	b = fmul(t0,b)
+	return b
+
+
+def curve25519_pow_two252m3(z):
+	b=0
+	c=0
+	t0=0
+	two252m3 = 0
+
+	c = pow_xtimes(z,1)
+	t0 = pow_xtimes(c,2)
+	b = fmul(t0,z)
+	c = fmul(b,c)
+	t0 = pow_xtimes(c,1)
+	b = fmul(t0,b)
+	b=curve25519_pow_two5mtwo0_two250mtwo0(b)
+	b = pow_xtimes(b,2)
+	two252m3 = fmul(b,z)
+	return two252m3
+
+
+
+a = DEC_ALL[7]
+out = a 
+for i in range(2,8):
+	out = (out * a) % P
+	print("\na^",i,":\n");
+	numToHex(out,NUMBER_INTERPRETATION_CHOICES["16x16"])
+	print("\n-------------\n")
+
+print("a7")
+numToHex((a**7) % P,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("magma output")
+numToHex(45394539084597323530376354102656208690624378759476621182742172356427145644651,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+"""
+
+u = 1
+v = DEC_ALL[7]
+
+# v^3
+v3 = (v**3) % P
+# v^7
+v7 = (v**6) % P
+
+print("\nv3:\n")
+numToHex(v3,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("\nv7:\n")
+numToHex(v7,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("\nv7___:\n")
+numToHex((v**7)%P,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+
+# (u*v^3)
+st_bracket = (u*v3) % P 
+
+# (u*v^7)
+
+nd_bracket = (u*v7) % P 
+
+print("\nst_bracket:\n")
+numToHex(st_bracket,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("\nnd_bracket:\n")
+numToHex(nd_bracket,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+# r = (u*v^7) ^ {(p-5)/8}
+r = curve25519_pow_two252m3(nd_bracket)
+
+# r2 
+r2 = (r * st_bracket) % P
+
+temp2 = (r2**2) % P
+check = (v*temp2) % P
+
+
+print("\nin:\n")
+numToHex(v,NUMBER_INTERPRETATION_CHOICES["16x16"])
+print("\nout:\n")
+numToHex(check,NUMBER_INTERPRETATION_CHOICES["16x16"])
+"""
+
+
+"""
+for i in range(len(DEC_ALL)):
+	u = 1
+	v = DEC_ALL[i]
+
+	# v^3
+	v3 = (v**3) % P
+	# v^7
+	v7 = (v**7) % P
+
+	# (u*v^3)
+	st_bracket = (u*v3) % P 
+
+	# (u*v^7)
+
+	nd_bracket = (u*v7) % P 
+
+
+	# r = (u*v^7) ^ {(p-5)/8}
+	r = curve25519_pow_two252m3(nd_bracket)
+
+	# r2 
+	r2 = (r * st_bracket) % P
+
+	temp2 = (r2**2) % P
+	check = (v*temp2) % P
+
+	print("DEC_ALL[i]",i)
+	#print("check",check)
+	#print("u:",u)
+	print("\nin:\n")
+	numToHex(DEC_ALL[i],NUMBER_INTERPRETATION_CHOICES["16x16"])
+	print("\nout:\n")
+	numToHex(check,NUMBER_INTERPRETATION_CHOICES["16x16"])
+	print("\n-------------\n")
+"""

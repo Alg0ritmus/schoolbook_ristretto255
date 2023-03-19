@@ -33,13 +33,14 @@ def numToHex(BIG_NUMBER,interpret):
 	#########
 	# PRINT #
 	#########
+	"""
 	for i in range(len(result)):
 	  if i%4==0:
 	    print()
 	  print(result[i], end=", ")
 
 	print("\n\n\n")
-
+	"""
 	for i in range(len(result)):
 	  if i%4==0:
 	    print()

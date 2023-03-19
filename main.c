@@ -5,7 +5,7 @@
 int main(){
 
 	const u8 in[32] = {2,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15,16,16};
-	field_elem out;
+	field_elem out, a, a_out;
 	field_elem inv_sq_field_elem;
 
 	// negative vectors
@@ -33,16 +33,42 @@ int main(){
 	};
 
 
-	unpack25519(out,in);
-	
+
+	/*
 	printf("inv_sqrt( out, u, const, v)\n");
 	// out u v
-	inv_sqrt(inv_sq_field_elem,out,F_TWO);
-	printf("inv_sq_field_elem in main:\n");
-	print(inv_sq_field_elem);
+	for (int i = 0; i < 8; ++i){
+		unpack25519(out,test_vectors_compl[i]);
+		inv_sqrt(inv_sq_field_elem,F_ONE,out);
+		printf("inv_sq_field_elem in main:\n");
+		print(inv_sq_field_elem);
+		printf("\n........................\n");
+	}
+	
+	*/
 
 
-	/* testing negative vectors */
+	unpack25519(a,test_vectors_compl[7]); // posledny vector
+	fcopy(out,a); // out = a
+
+	for (int i = 2; i < 8; ++i)
+	{
+
+		fmul(out,out,a); // a*a -> fmul prevziaty z PDF Kleppmann
+		printf("\na^%d:\n",i);
+		print(out);
+		printf("\n-------------\n");
+
+	}
+
+	printf("a^7 z funkcie pow7:\n");
+	pow7(a_out,a);
+	print(a_out);
+
+
+
+	/* testing negative vectors 
+
 
 	printf("\n\ntesting negative vectors:\n");
 	int is_negative=1;
@@ -60,9 +86,12 @@ int main(){
 	else{
 		printf("FAILED, NOT all are negative\n");	
 	}
+	*/
 
 
-	/* testing complements of negative vectors */
+
+
+	/* testing complements of negative vectors 
 	printf("\n\ntesting complements of negative vectors:\n");
 	is_negative=1;
 
@@ -79,28 +108,10 @@ int main(){
 	else{
 		printf("FAILED, NOT all complements are positive\n");	
 	}
-
+	
+	*/
+	
 	/*
-	// TEST
-	field_elem t2, t4, t8, tx2, tx8;
-
-	//a^2*1  -> (a^2*1)^2*2 -> (a^2)^4 = a^8
-	pow_xtimes(tx2,out,1);
-	pow_xtimes(tx8,tx2,2);
-
-
-	// ((a^2)^2)^2 = a^8
-	fmul(t2,out,out);
-	fmul(t4,t2,t2);
-	fmul(t8,t4,t4);
-
-	printf("POROVNAVAM!!!\n");
-	print(tx8);
-	print(t8);
-
-	int skuska = feq(tx8,t8);
-	printf("skuska:%d\n",skuska );
-
 	// skuska modulus
 	
 	field_elem A;
@@ -110,6 +121,8 @@ int main(){
 	pack25519(A_pack,A);
 	print_32(A_pack);
 
+
+	
 	ristretto255_point *temp_rp;
 	ristretto255_decode(&temp_rp, in);
 	printf("point cords \n");
@@ -124,8 +137,8 @@ int main(){
 	ristretto255_encode(A_pack_out, temp_rp);
 	printf("\nA_pack_out after encoding:\n");
 	print_32(A_pack_out);
-
 	*/
+	
 
 	return 0;
 }
