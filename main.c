@@ -37,16 +37,16 @@ int main(){
 	/*
 	printf("inv_sqrt( out, u, const, v)\n");
 	// out u v
-	for (int i = 0; i < 8; ++i){
-		unpack25519(out,test_vectors_compl[i]);
-		inv_sqrt(inv_sq_field_elem,F_ONE,out);
-		printf("inv_sq_field_elem in main:\n");
-		print(inv_sq_field_elem);
-		printf("\n........................\n");
-	}
 	
-	*/
+	unpack25519(out,test_vectors_compl[7]);
+	inv_sqrt(inv_sq_field_elem,F_ONE,out);
+	printf("inv_sq_field_elem in main:\n");
+	print(inv_sq_field_elem);
+	printf("\n........................\n");
+	
+	
 
+	
 
 	unpack25519(a,test_vectors_compl[7]); // posledny vector
 	fcopy(out,a); // out = a
@@ -65,7 +65,7 @@ int main(){
 	pow7(a_out,a);
 	print(a_out);
 
-
+	*/
 
 	/* testing negative vectors 
 
@@ -89,11 +89,11 @@ int main(){
 	*/
 
 
+	printf("!!!!!!!!!!!!!!!!!!!!!!!!	%d\n", test_vectors_compl[7][0]&1);
 
-
-	/* testing complements of negative vectors 
+	//testing complements of negative vectors 
 	printf("\n\ntesting complements of negative vectors:\n");
-	is_negative=1;
+	int is_negative=1;
 
 	for (int i = 0; i < 8; ++i){
 		field_elem temp;
@@ -109,28 +109,28 @@ int main(){
 		printf("FAILED, NOT all complements are positive\n");	
 	}
 	
-	*/
 	
-	/*
+	
+	
 	// skuska modulus
-	
-	field_elem A;
-	u8 A_pack[32];
-	u8 A_pack_out[32];
-	fcopy(A,_121665);
-	pack25519(A_pack,A);
-	print_32(A_pack);
 
 
-	
+
+	printf("skuska");
 	ristretto255_point *temp_rp;
-	ristretto255_decode(&temp_rp, in);
+	fcopy(out,test_vectors_compl[7]);
+	// out == test_vectors_compl[7]
+	ristretto255_decode(&temp_rp, out);
 	printf("point cords \n");
+
+	
 	print(&temp_rp->x);
 	print(&temp_rp->y);
 	print(&temp_rp->z);
 	print(&temp_rp->t);
+	
 
+	/*
 
 	printf("\nA_pack_out before encoding:\n");
 	print_32(A_pack_out);

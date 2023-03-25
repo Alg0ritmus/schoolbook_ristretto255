@@ -5,8 +5,9 @@ NUMBER_INTERPRETATION_CHOICES={
 
 P = (2**255)-19 
 
-	
-
+SQRT_M1 = 19681161376707505956807079304988542015446066515923890162744021073123829784752	
+EDWARDS_D = 37095705934669439343138083508754565189542113879843219016388785533085940283555
+INVSQRT_A_MINUS_D = 54469307008909316920995813868745141605393597292927456921205312896311721017578
 def hexToNum(input,interpret):
 	sum = 0
 
@@ -17,6 +18,7 @@ def hexToNum(input,interpret):
 
 
 	print(sum,"\ninverse number:", P-sum)
+	return sum
 
 
 def numToHex(BIG_NUMBER,interpret):
@@ -45,6 +47,8 @@ def numToHex(BIG_NUMBER,interpret):
 	  if i%4==0:
 	    print()
 	  print(hex(result[i]), end=", ")
+
+	return result
 
 
 

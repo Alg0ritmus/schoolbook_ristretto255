@@ -244,7 +244,7 @@ int bytes_eq_32( const u8 a[32],  const u8 b[32]){
 
 	for (int i = 0; i < 32; ++i){
 		result &= a[i] == b[i];
-		printf("a=%02hhx| b=%02hhx \n",a[i],b[i] );
+		//printf("a=%02hhx| b=%02hhx \n",a[i],b[i] );
 	}
 
 	return result;
@@ -287,6 +287,11 @@ int is_neg(const field_elem in){
 	pack25519(temp, in);
 
 	return temp[0] & 1;
+}
+
+int is_neg_bytes(const u8 in[32]){
+
+	return in[0] & 1;
 }
 
 
@@ -439,27 +444,20 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	int flipped_sign_sqrt_i;
 	int was_nonzero_square;
 	int should_rotate;
+	u8 temp_bytes[32];
 
 
 	pow3(v3,v); 							//v^3
 	pow7(v7,v); 							//v^7
 
-	printf("v3\n");
-	print(v3);
-	printf("v7\n");
-	print(v7);
 
 	fmul(st_bracket,u,v3);					// (u*v^3)
 	fmul(nd_bracket,u,v7);					// (u*v^7)
 
-	printf("st_bracket\n");
-	print(st_bracket);
-	printf("nd_bracket\n");
-	print(nd_bracket);
-
+	
 	curve25519_pow_two252m3(r,nd_bracket); 	// r = (u*v^7) ^ {(p-5)/8}
 	//pow2523(r,nd_bracket);
-
+	
 	fmul(r2,r,st_bracket);					// r2 = (u*v^3) * (u*v^7) ^ {(p-5)/8}
 
 
@@ -518,9 +516,6 @@ void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	was_nonzero_square = correct_sign_sqrt | flipped_sign_sqrt;
 	//printf("\nwas_nonzero_square = %d\n", was_nonzero_square);
 
-
-
-
 	// output
 	fcopy(out,r2);
 
@@ -546,15 +541,17 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 
 	int is_canonical, is_negative;
 
-	u8 checked_bytes[32];
+	u8 checked_bytes[32], temporary[32];
 
 	// Step 1: Check that the encoding of the field element is canonical
 	unpack25519(s, bytes_in);
 	pack25519(checked_bytes,s);
+	
 
 	// check if bytes_in == checked_bytes, else abort
 	is_canonical = bytes_eq_32(checked_bytes,bytes_in);
-	is_negative = is_neg(s);
+	is_negative = is_neg_bytes(bytes_in);
+	printf("je negative???: %d\n", bytes_in[0]&1);
 
 	if (is_canonical == 0 || is_negative==1){
 		printf("Bad encoding or neg bytes passed to the ristretto255_decode function! is_canonical=%d, is_negative=%d\n",is_canonical,is_negative);
@@ -567,31 +564,45 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	fadd(u1,F_ONE,ss); // 1 + as^2
 	fsub(u2,F_ONE,ss); // 1 - as^2
 
+	
+
 	pow2(uu1,u1);
 	pow2(uu2,u2);
 
+
 	// d -> from ristretto darft
 
-	fmul(duu1,EDWARDS_D,uu2); // a*d*u1^2
+	fmul(duu1,EDWARDS_D,uu1); // a*d*u1^2
 	fsub(v,duu1,uu2); // adu1^2 - u2^2
 
 	fmul(vuu2,v,uu2); // v*u2^2
 
-
-
+	
 	inv_sqrt(I,F_ONE,vuu2);
 
 	fmul(Dx,I,u2); // I*u2
 	fmul(Dxv, Dx, v); // Dx * v
 	fmul(Dy, I, Dxv); // I*Dx*v
 
+	
+
 	// cords
 	// x: |2sDx|
 	fmul(sDx,s,Dx);
 	fadd(x,sDx,sDx); // 2sDx
 
+	/*
+	pack25519(temporary,x);
+	printf("\nx:\n");
+	print_32(temporary);
+	*/
+
 	if (is_neg(x)){
 		fneg(abs_x,x); // |2sDx|
+
+	}
+	else{
+		fcopy(abs_x,x);
 	}
 
 	// y: u1Dy
@@ -600,7 +611,23 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	// t: x,y
 	fmul(t,x,y);
 
+	
+	u8 x_print[32],y_print[32],z_print[32],t_print[32];
+	pack25519(x_print,abs_x);
+	pack25519(y_print,y);
+	pack25519(z_print,F_ONE);
+	pack25519(t_print,t);
 
+	printf("\n-------------\n");
+	print_32(x_print);
+	printf("\n");
+	print_32(y_print);
+	printf("\n");
+	print_32(z_print);
+	printf("\n");
+	print_32(t_print);
+	printf("\n-------------\n");
+	
 	// fill the struct
 	fcopy(ristretto_out->x, abs_x);
 	fcopy(ristretto_out->y, y);

@@ -121,14 +121,24 @@ DEC_ALL = [
 53791225109085577843242291480306666131143723373880160896372464448377688480102,
 ]
 
+"""
+INPUT = P-1
+numToHex(INPUT,NUMBER_INTERPRETATION_CHOICES["32x8"])
 
-def fneg(a):
-	return (P-a)
+print("\n")
 
-def is_neg(a):
-	arr_a = numToHex(a,NUMBER_INTERPRETATION_CHOICES["32x8"])
-	return arr_a[0] & 1
+INPUT = P_HEX
 
+for i in range(len(HEX_ALL)):
+	print("HEX_"+str(i+1))
+	hexToNum(HEX_ALL[i],NUMBER_INTERPRETATION_CHOICES["32x8"])
+	print()
+
+
+for i in DEC_ALL:
+	numToHex(i,NUMBER_INTERPRETATION_CHOICES["32x8"])
+
+"""
 def fmul(a,b):
 	out = (a * b) % P
 	return out
@@ -178,144 +188,103 @@ def curve25519_pow_two252m3(z):
 	two252m3 = fmul(b,z)
 	return two252m3
 
+"""
 
+a = DEC_ALL[7]
+out = a 
+for i in range(2,8):
+	out = (out * a) % P
+	print("\na^",i,":\n");
+	numToHex(out,NUMBER_INTERPRETATION_CHOICES["16x16"])
+	print("\n-------------\n")
 
+print("a7")
 
+out = (a**7) % P
 
-def inv_sqrt(u,v):
-	# v^3
-	v3 = (v**3) % P
-	# v^7
-	v7 = (v**7) % P
+numToHex((a**7) % P,NUMBER_INTERPRETATION_CHOICES["16x16"])
 
-
-	# (u*v^3)
-	st_bracket = (u*v3) % P 
-
-	# (u*v^7)
-
-	nd_bracket = (u*v7) % P 
-
-
-
-	# r = (u*v^7) ^ {(p-5)/8}
-	r = curve25519_pow_two252m3(nd_bracket)
-
-	# r2 
-	r2 = (r * st_bracket) % P
-
-	temp2 = (r2**2) % P
-	check = (v*temp2) % P
-
-	u_neg = fneg(u)
-	u_neg_i = (u_neg*SQRT_M1) % P
-
-
-	correct_sign_sqrt = check == u;
-	flipped_sign_sqrt = check == u_neg;
-	flipped_sign_sqrt_i = check == u_neg_i;
-
-	r_prime = (r2*SQRT_M1) % P
-
-	should_rotate = flipped_sign_sqrt | flipped_sign_sqrt_i
-
-	if should_rotate:
-		r2 = r_prime
-
-	r_is_negative = is_neg(r2)
-	r_negative = fneg(r2)
-
-	if r_is_negative:
-		r2 = r_negative
-
-	was_nonzero_square = correct_sign_sqrt | flipped_sign_sqrt
-	return r2
-
-
+print("magma output")
+numToHex(45394539084597323530376354102656208690624378759476621182742172356427145644651,NUMBER_INTERPRETATION_CHOICES["16x16"])
 
 """
-print("\nend:\n")
+"""
+
 u = 1
 v = DEC_ALL[7]
-r2 = inv_sqrt(u,v)
-numToHex(r2,NUMBER_INTERPRETATION_CHOICES["32x8"])
+
+# v^3
+v3 = (v**3) % P
+# v^7
+v7 = (v**6) % P
+
+print("\nv3:\n")
+numToHex(v3,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("\nv7:\n")
+numToHex(v7,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("\nv7___:\n")
+numToHex((v**7)%P,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+
+# (u*v^3)
+st_bracket = (u*v3) % P 
+
+# (u*v^7)
+
+nd_bracket = (u*v7) % P 
+
+print("\nst_bracket:\n")
+numToHex(st_bracket,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+print("\nnd_bracket:\n")
+numToHex(nd_bracket,NUMBER_INTERPRETATION_CHOICES["16x16"])
+
+# r = (u*v^7) ^ {(p-5)/8}
+r = curve25519_pow_two252m3(nd_bracket)
+
+# r2 
+r2 = (r * st_bracket) % P
+
+temp2 = (r2**2) % P
+check = (v*temp2) % P
+
+
+print("\nin:\n")
+numToHex(v,NUMBER_INTERPRETATION_CHOICES["16x16"])
+print("\nout:\n")
+numToHex(check,NUMBER_INTERPRETATION_CHOICES["16x16"])
 """
 
-def ristretto255_decode(s):
-	ss = (s*s) % P
-	u1 = (1 + ss) % P
-	u2 = (1 - ss) % P
-
-	uu1 = (u1*u1) % P
-	uu2 = (u2*u2) % P
-
-	duu1 = (EDWARDS_D*uu1) % P
-	v = (duu1-uu2) % P
-	vuu2 = (v*uu2) % P
-
-	I = inv_sqrt(1,vuu2)
-
-	Dx = (I*u2) % P
-	Dxv = (Dx*v) % P
-	Dy = (I*Dxv) % P
-
-	
-	sDx = (s*Dx) % P
-	x = (sDx+sDx) % P
-
-	"""
-	print("\nx:\n")
-	numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"])
-	print("\nx-------:\n")
-	"""
-
-	abs_x = abs(x)
-
-	y = (u1*Dy) % P
-	t = (x*y) % P
-
-	return (abs_x,y,1,t)
 
 
+u = 1
+v = DEC_ALL[7]
 
-def ristretto255_encode(X,Y,Z,T):
+# v^3
+v3 = (v**3) % P
+# v^7
+v7 = (v**7) % P
 
-	u1 = ((X+Y)*(Z-Y)) % P
-	u2 = (X*Y) % P
-	u1u2_2 = (u1*u2*u2) % P
-	I = inv_sqrt(1,u1u2_2)
+numToHex(v3,NUMBER_INTERPRETATION_CHOICES["32x8"]
+numToHex(v7,NUMBER_INTERPRETATION_CHOICES["32x8"]
 
-	D1 = (u1*I) % P
-	D2 = (u2*I) % P
-	Zinv = (D1*D2*T) % P
+# (u*v^3)
+st_bracket = (u*v3) % P 
 
-	if Zinv>0:
-		# why X != Y * (+-1 * inv(SQRT_M1)) => Y (+- 1/sqrt(a))
-		# https://ristretto.group/formulas/encoding.html
-		X,Y = ((Y*SQRT_M1) % P, (X*SQRT_M1) % P)
-		D = (D1*INVSQRT_A_MINUS_D) % P
-	else:
-		X,Y = X,Y
-		D = D2
+# (u*v^7)
 
-	XZinv = (X*Zinv) % P
+nd_bracket = (u*v7) % P 
 
-	if XZinv < 1:
-		Y = fneg(Y)
 
-	temp_zy = (Z-Y) % P
-	temp_s = (temp_zy*D) % P
-	s = abs(temp_s)
+# r = (u*v^7) ^ {(p-5)/8}
+r = curve25519_pow_two252m3(nd_bracket)
 
-	return s
+# r2 
+r2 = (r * st_bracket) % P
 
-x,y,z,t = ristretto255_decode(DEC_ALL[7])
+temp2 = (r2**2) % P
+check = (v*temp2) % P
 
-print("\nX:\n")
-numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"])
-print("\nY:\n")
-numToHex(y,NUMBER_INTERPRETATION_CHOICES["32x8"])
-print("\nZ:\n")
-numToHex(z,NUMBER_INTERPRETATION_CHOICES["32x8"])
-print("\nT:\n")
-numToHex(t,NUMBER_INTERPRETATION_CHOICES["32x8"])
+
