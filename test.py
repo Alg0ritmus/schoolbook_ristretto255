@@ -250,7 +250,8 @@ def ristretto255_decode(s):
 	uu2 = (u2*u2) % P
 
 	duu1 = (EDWARDS_D*uu1) % P
-	v = (duu1-uu2) % P
+	duu1_neg = fneg(duu1)
+	v = (duu1_neg - uu2) % P # add minus here due to draft
 	vuu2 = (v*uu2) % P
 
 	I = inv_sqrt(1,vuu2)
@@ -269,7 +270,10 @@ def ristretto255_decode(s):
 	print("\nx-------:\n")
 	"""
 
-	abs_x = abs(x)
+	if is_neg(x):
+		abs_x = fneg(x)
+	else:
+		abs_x = x
 
 	y = (u1*Dy) % P
 	t = (x*y) % P
@@ -280,7 +284,7 @@ def ristretto255_decode(s):
 
 def ristretto255_encode(X,Y,Z,T):
 
-	u1 = ((X+Y)*(Z-Y)) % P
+	u1 = ((Z+Y)*(Z-Y)) % P
 	u2 = (X*Y) % P
 	u1u2_2 = (u1*u2*u2) % P
 	I = inv_sqrt(1,u1u2_2)
@@ -289,7 +293,9 @@ def ristretto255_encode(X,Y,Z,T):
 	D2 = (u2*I) % P
 	Zinv = (D1*D2*T) % P
 
-	if Zinv>0:
+	tZinv = (T*Zinv) % P # this line added due to draft
+
+	if tZinv>0:
 		# why X != Y * (+-1 * inv(SQRT_M1)) => Y (+- 1/sqrt(a))
 		# https://ristretto.group/formulas/encoding.html
 		X,Y = ((Y*SQRT_M1) % P, (X*SQRT_M1) % P)
@@ -297,6 +303,7 @@ def ristretto255_encode(X,Y,Z,T):
 	else:
 		X,Y = X,Y
 		D = D2
+		Z=Z
 
 	XZinv = (X*Zinv) % P
 
@@ -319,3 +326,6 @@ print("\nZ:\n")
 numToHex(z,NUMBER_INTERPRETATION_CHOICES["32x8"])
 print("\nT:\n")
 numToHex(t,NUMBER_INTERPRETATION_CHOICES["32x8"])
+
+
+

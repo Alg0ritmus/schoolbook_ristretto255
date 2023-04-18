@@ -116,28 +116,31 @@ int main(){
 
 
 
-	printf("skuska");
-	ristretto255_point *temp_rp;
+	printf("skuska\n");
+	ristretto255_point abc; // create struct 
+	ristretto255_point *temp; // create "empty" pointer
+	temp = &abc; // pointer - store address of abc
+	// I can now access value by *temp 
+	
 	fcopy(out,test_vectors_compl[7]);
 	// out == test_vectors_compl[7]
-	ristretto255_decode(&temp_rp, out);
-	printf("point cords \n");
+	ristretto255_decode(temp, out); // passing pointer (address)
+	//printf("point cords \n");
+
+	// I can access pointers value (value of obj located at that address)
+	// by using dereferencing * ---> *temp
+	// temp->x is eq to *(temp).x
+
+
+	pack_and_print_32(temp->x); 
+	pack_and_print_32(temp->y);
+	pack_and_print_32(temp->z);
+	pack_and_print_32(temp->t);
+
 
 	
-	print(&temp_rp->x);
-	print(&temp_rp->y);
-	print(&temp_rp->z);
-	print(&temp_rp->t);
+
 	
-
-	/*
-
-	printf("\nA_pack_out before encoding:\n");
-	print_32(A_pack_out);
-	ristretto255_encode(A_pack_out, temp_rp);
-	printf("\nA_pack_out after encoding:\n");
-	print_32(A_pack_out);
-	*/
 	
 
 	return 0;

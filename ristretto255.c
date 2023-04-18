@@ -1,3 +1,4 @@
+#define DEBUGGING  1
 #include "ristretto255.h"
 
 /*		UTILS		*/
@@ -9,6 +10,13 @@ void print(field_elem o){
 		
 	}
 	printf("\n");
+}
+
+
+void pack_and_print_32(field_elem o){
+	u8 temp[32];
+	pack25519(temp,o);
+	print_32(temp);
 }
 
 void print_32(const u8* o){
@@ -141,17 +149,22 @@ for (i = 0; i < 16; ++i) c[i] = in[i];
  field_elem m, t;
  for (i = 0; i < 16; ++i) t[i] = in[i];
  carry25519(t); carry25519(t); carry25519(t);
+
  for (j = 0; j < 2; ++j) {
  m[0] = t[0] - 0xffed;
- for(i = 1; i < 15; i++) {
- m[i] = t[i] - 0xffff - ((m[i-1] >> 16) & 1);
- m[i-1] &= 0xffff;
+ 
+	 for(i = 1; i < 15; i++) {
+	 m[i] = t[i] - 0xffff - ((m[i-1] >> 16) & 1);
+	 m[i-1] &= 0xffff;
+	 }
+
+	 m[15] = t[15] - 0x7fff - ((m[14] >> 16) & 1);
+	 carry = (m[15] >> 16) & 1;
+	 m[14] &= 0xffff;
+	 swap25519(t, m, 1 - carry);
  }
- m[15] = t[15] - 0x7fff - ((m[14] >> 16) & 1);
- carry = (m[15] >> 16) & 1;
- m[14] &= 0xffff;
- swap25519(t, m, 1 - carry);
- }
+
+
  for (i = 0; i < 16; ++i) {
  out[2*i] = t[i] & 0xff;
  out[2*i + 1] = t[i] >> 8;
@@ -252,6 +265,11 @@ int bytes_eq_32( const u8 a[32],  const u8 b[32]){
 
 // copy in to out
 void fcopy(field_elem out, const field_elem in){
+	for (int i = 0; i < 16; ++i)
+	{
+		printf("%llx ", in[i]);
+	}
+	printf(" ---\n");
 	out[0]  = in[0];
 	out[1]  = in[1];
 	out[2]  = in[2];
@@ -534,7 +552,7 @@ typedef struct ge_point25519{
 int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]){
 	
 	// temp vars
-	field_elem s, ss, u1, u2, uu1, uu2, duu1, v, vuu2, I, Dx, Dxv,Dy, sDx;
+	field_elem s, ss, u1, u2, uu1, uu2,duu1_positive, duu1, v, vuu2, I, Dx, Dxv,Dy, sDx;
 
 	// cords
 	field_elem x, abs_x ,y,t;
@@ -572,7 +590,8 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 
 	// d -> from ristretto darft
 
-	fmul(duu1,EDWARDS_D,uu1); // a*d*u1^2
+	fmul(duu1_positive,EDWARDS_D,uu1); // d*u1^2
+	fneg(duu1,duu1_positive); // -(D * u1^2) 
 	fsub(v,duu1,uu2); // adu1^2 - u2^2
 
 	fmul(vuu2,v,uu2); // v*u2^2
@@ -611,28 +630,11 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	// t: x,y
 	fmul(t,x,y);
 
-	
-	u8 x_print[32],y_print[32],z_print[32],t_print[32];
-	pack25519(x_print,abs_x);
-	pack25519(y_print,y);
-	pack25519(z_print,F_ONE);
-	pack25519(t_print,t);
-
-	printf("\n-------------\n");
-	print_32(x_print);
-	printf("\n");
-	print_32(y_print);
-	printf("\n");
-	print_32(z_print);
-	printf("\n");
-	print_32(t_print);
-	printf("\n-------------\n");
-	
-	// fill the struct
 	fcopy(ristretto_out->x, abs_x);
 	fcopy(ristretto_out->y, y);
 	fcopy(ristretto_out->z, F_ONE);
 	fcopy(ristretto_out->t, t); 
+	
 	return 1;
 }
 
@@ -669,15 +671,20 @@ int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point *r
 		fmul(D,D1,INVSQRT_A_MINUS_D); // D = D1/√(a-d)  -> 1/√(a-d) ->  INVSQRT_A_MINUS_D
 
 	}
-	/*
+	
 	else{
-		// x = x
+		fcopy(&ristretto_in->x,&ristretto_in->x);
+		fcopy(&ristretto_in->y,&ristretto_in->y);
+		fcopy(&ristretto_in->z,&ristretto_in->z);
+		fcopy(D,D2);
+
+
 		// y = y
 		// D = D2
 	}
-	*/
+	
 
-	fmul(xZiv,&ristretto_in->z,Zinv);
+	fmul(xZiv,&ristretto_in->x,Zinv);
 	if (is_neg(xZiv)){
 		fneg(_y,&ristretto_in->y); // -y
 		fcopy(&ristretto_in->y,_y); // y = -y

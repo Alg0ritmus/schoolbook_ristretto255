@@ -26,6 +26,7 @@ extern const field_elem EDWARDS_D;
 
 void print(field_elem o);
 void print_32(const u8* o);
+void pack_and_print_32(field_elem o);
 
 void unpack25519(field_elem out, const u8 *in);
 void carry25519(field_elem elem);
