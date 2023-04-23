@@ -122,11 +122,12 @@ DEC_ALL = [
 ]
 
 
+
 def fneg(a):
 	return (P-a)
 
 def is_neg(a):
-	arr_a = numToHex(a,NUMBER_INTERPRETATION_CHOICES["32x8"])
+	arr_a = numToHex(a,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
 	return arr_a[0] & 1
 
 def fmul(a,b):
@@ -211,9 +212,10 @@ def inv_sqrt(u,v):
 	u_neg_i = (u_neg*SQRT_M1) % P
 
 
-	correct_sign_sqrt = check == u;
-	flipped_sign_sqrt = check == u_neg;
-	flipped_sign_sqrt_i = check == u_neg_i;
+	correct_sign_sqrt = (check == u);
+	flipped_sign_sqrt = (check == u_neg);
+	flipped_sign_sqrt_i = (check == u_neg_i);
+
 
 	r_prime = (r2*SQRT_M1) % P
 
@@ -229,7 +231,7 @@ def inv_sqrt(u,v):
 		r2 = r_negative
 
 	was_nonzero_square = correct_sign_sqrt | flipped_sign_sqrt
-	return r2
+	return (was_nonzero_square,r2)
 
 
 
@@ -254,7 +256,7 @@ def ristretto255_decode(s):
 	v = (duu1_neg - uu2) % P # add minus here due to draft
 	vuu2 = (v*uu2) % P
 
-	I = inv_sqrt(1,vuu2)
+	was_square,I = inv_sqrt(1,vuu2)
 
 	Dx = (I*u2) % P
 	Dxv = (Dx*v) % P
@@ -276,7 +278,23 @@ def ristretto255_decode(s):
 		abs_x = x
 
 	y = (u1*Dy) % P
-	t = (x*y) % P
+	t = (abs_x*y) % P
+
+	if was_square == False:
+		print("Decoding fails")
+		MSG(f'was_square = {was_square}')
+		#raise ValueError
+
+	if is_neg(t):
+		print("Decoding fails")
+		MSG(f't = {is_neg(t)}')
+		#raise ValueError
+
+	if y==0:
+		print("Decoding fails")
+		MSG(f'y = {y}')
+		#raise ValueError
+
 
 	return (abs_x,y,1,t)
 
@@ -284,48 +302,66 @@ def ristretto255_decode(s):
 
 def ristretto255_encode(X,Y,Z,T):
 
-	u1 = ((Z+Y)*(Z-Y)) % P
+	u1 = ( ((Z+Y)% P ) * ((Z-Y)%P) ) % P
 	u2 = (X*Y) % P
-	u1u2_2 = (u1*u2*u2) % P
-	I = inv_sqrt(1,u1u2_2)
+	u2_2 = (u2*u2) % P
+	u1u2_2 = (u1*u2_2) % P
+	_,I = inv_sqrt(1,u1u2_2) 
 
 	D1 = (u1*I) % P
 	D2 = (u2*I) % P
-	Zinv = (D1*D2*T) % P
+	Zinv = (((D1*D2) %P) * T) % P
 
-	tZinv = (T*Zinv) % P # this line added due to draft
+	iX = (X * SQRT_M1) % P
+	iY = (Y * SQRT_M1) % P
 
-	if tZinv>0:
-		# why X != Y * (+-1 * inv(SQRT_M1)) => Y (+- 1/sqrt(a))
-		# https://ristretto.group/formulas/encoding.html
-		X,Y = ((Y*SQRT_M1) % P, (X*SQRT_M1) % P)
-		D = (D1*INVSQRT_A_MINUS_D) % P
+	enchanted_denominator = (D1 * INVSQRT_A_MINUS_D) % P
+
+	tZinv = (T*Zinv) % P
+
+
+	if is_neg(tZinv):
+		X = iY
+		Y = iX
+		D_inv = enchanted_denominator
 	else:
-		X,Y = X,Y
-		D = D2
-		Z=Z
+		X = X
+		Y = Y
+		D_inv = D2
 
-	XZinv = (X*Zinv) % P
+	Z = Z
 
-	if XZinv < 1:
+	XZ_inv = (X * Zinv) % P
+	if is_neg(XZ_inv):
 		Y = fneg(Y)
+	else:
+		Y = Y
 
-	temp_zy = (Z-Y) % P
-	temp_s = (temp_zy*D) % P
-	s = abs(temp_s)
+	temp_s = (D_inv * ((Z-Y)%P) ) % P
 
-	return s
+	if is_neg(temp_s):
+		s = fneg(temp_s)
+	else:
+		s = temp_s
+	
+
+	return s 
+
+
 
 x,y,z,t = ristretto255_decode(DEC_ALL[7])
 
 print("\nX:\n")
-numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"])
+numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 print("\nY:\n")
-numToHex(y,NUMBER_INTERPRETATION_CHOICES["32x8"])
+numToHex(y,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 print("\nZ:\n")
-numToHex(z,NUMBER_INTERPRETATION_CHOICES["32x8"])
+numToHex(z,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 print("\nT:\n")
-numToHex(t,NUMBER_INTERPRETATION_CHOICES["32x8"])
+numToHex(t,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 
 
+vys = ristretto255_encode(x,y,z,t)
+print("\n RESULT after encode:\n")
+numToHex(vys,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 

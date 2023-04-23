@@ -23,7 +23,7 @@ void print_32(const u8* o){
 
 //	printf("PRINT: ");
 	for (int i=0;i<32;i++){
-		printf("%02hx ", o[i]);
+		printf("%02hhx ", o[i]);
 		
 	}
 	printf("\n");
@@ -224,12 +224,28 @@ field_elem a, b, c, d, e, f, x;
 // return 1 if they're equal
 int feq( const field_elem a,  const field_elem b){
 	int result = 1;
-	u8 a_32[32],b_32[32];
-	pack25519(a_32,a);
-	pack25519(b_32,b);
 
 	// constant time
-	result &= bytes_eq_32(a_32,b_32);
+	result &= a[0] == b[0];
+	result &= a[1] == b[1];
+	result &= a[2] == b[2];
+	result &= a[3] == b[3];
+
+	result &= a[4] == b[4];
+	result &= a[5] == b[5];
+	result &= a[6] == b[6];
+	result &= a[7] == b[7];
+
+	result &= a[8] == b[8];
+	result &= a[9] == b[9];
+	result &= a[10] == b[10];
+	result &= a[11] == b[11];
+
+	result &= a[12] == b[12];
+	result &= a[13] == b[13];
+	result &= a[14] == b[14];
+	result &= a[15] == b[15];
+
 
 	return result;
 }
@@ -249,6 +265,11 @@ int bytes_eq_32( const u8 a[32],  const u8 b[32]){
 
 // copy in to out
 void fcopy(field_elem out, const field_elem in){
+	for (int i = 0; i < 16; ++i)
+	{
+		printf("%llx ", in[i]);
+	}
+	printf(" ---\n");
 	out[0]  = in[0];
 	out[1]  = in[1];
 	out[2]  = in[2];
@@ -432,7 +453,7 @@ sv pow2523(field_elem o,const field_elem i)
 // z^((p-5)/8) = z^(2^252 - 3)
 // code inspired by:
 // https://github.com/isislovecruft/ristretto-donna/blob/master/src/ristretto-donna.c#L97
-int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
+void inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check, u_neg,u_neg_i, r_prime,r_negative;
 	u8 r_bytes;
 	int r_is_negative;
@@ -463,6 +484,16 @@ int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 	pow2(temp2,r2);							// tmp = r2 ^ 2 -> needed for check
 	fmul(check,v,temp2);					// check = (r2 ^ 2) * v
 
+	// Check if everything is correct: check == u ?
+	
+	printf("\nPrint check IN:");
+	print(v);
+	
+	printf("\nPrint check:");
+	print(check);
+
+	//printf("\nPrint expected_check:");
+	//print(u);
 	
 
 	fneg(u_neg,u);
@@ -472,8 +503,11 @@ int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
   	flipped_sign_sqrt = feq(check, u_neg);
   	flipped_sign_sqrt_i = feq(check, u_neg_i);
 
-
-  	
+  	/*
+  	printf("correct_sign_sqrt = %d\n", correct_sign_sqrt);
+  	printf("flipped_sign_sqrt = %d\n", flipped_sign_sqrt);
+  	printf("flipped_sign_sqrt_i = %d\n", flipped_sign_sqrt_i);
+	*/
 
   	fmul(r_prime, r2, SQRT_M1);
 	should_rotate = flipped_sign_sqrt | flipped_sign_sqrt_i;
@@ -502,7 +536,6 @@ int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 
 	// output
 	fcopy(out,r2);
-	return was_nonzero_square;
 
 }
 
@@ -518,7 +551,6 @@ typedef struct ge_point25519{
 // generate ristretto point from bytes[32]
 int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]){
 	
-	int was_square;
 	// temp vars
 	field_elem s, ss, u1, u2, uu1, uu2,duu1_positive, duu1, v, vuu2, I, Dx, Dxv,Dy, sDx;
 
@@ -537,9 +569,10 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	// check if bytes_in == checked_bytes, else abort
 	is_canonical = bytes_eq_32(checked_bytes,bytes_in);
 	is_negative = is_neg_bytes(bytes_in);
+	printf("je negative???: %d\n", bytes_in[0]&1);
 
 	if (is_canonical == 0 || is_negative==1){
-		printf("ristretto255_decode: Bad encoding or neg bytes passed to the ristretto255_decode function! is_canonical=%d, is_negative=%d\n",is_canonical,is_negative);
+		printf("Bad encoding or neg bytes passed to the ristretto255_decode function! is_canonical=%d, is_negative=%d\n",is_canonical,is_negative);
 		return 0;
 	}
 
@@ -564,7 +597,7 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	fmul(vuu2,v,uu2); // v*u2^2
 
 	
-	was_square = inv_sqrt(I,F_ONE,vuu2);
+	inv_sqrt(I,F_ONE,vuu2);
 
 	fmul(Dx,I,u2); // I*u2
 	fmul(Dxv, Dx, v); // Dx * v
@@ -595,25 +628,13 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	fmul(y,u1,Dy);
 
 	// t: x,y
-	fmul(t,abs_x,y);
+	fmul(t,x,y);
 
 	fcopy(ristretto_out->x, abs_x);
 	fcopy(ristretto_out->y, y);
 	fcopy(ristretto_out->z, F_ONE);
 	fcopy(ristretto_out->t, t); 
-
-	if (was_square == 0){
-		printf("\n\n\n ristretto255_decode: Bad encoding! was_square=%d \n\n\n",was_square);
-		return 0;
-	}
-	if (is_neg(t)){
-		printf("\n\n\n ristretto255_decode: Bad encoding! is_neg(t)=%d \n\n\n",is_neg(t));
-		return 0;
-	}
-	if (feq(y,F_ZERO)){
-		printf("\n\n\n ristretto255_decode: Bad encoding! feq(y,F_ZERO)=%d \n\n\n",feq(y,F_ZERO));
-		return 0;
-	}
+	
 	return 1;
 }
 
@@ -621,9 +642,9 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 
 int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* ristretto_in){
 
-	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2,D, D1D2,Zinv, iX, iY, enchanted_denominator, tZinv;
-	field_elem _X, _Y,_Z, D_inv,XZ_inv,Y,temp_s,s,Z_Y;
+	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2,D, D1D2,Zinv, TZinv, ix,iy,xZiv,_y, z_y,z_yD,s;
 
+	printf("in coding&&&&&&&c\n");
 	fadd(temp_zy1,ristretto_in->z,ristretto_in->y);
 	fsub(temp_zy2,ristretto_in->z,ristretto_in->y);
 	fmul(u1,temp_zy1,temp_zy2); // (Z+Y)(Z-Y)
@@ -640,50 +661,50 @@ int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* r
 
 	fmul(D1D2,D1,D2); // D1 * D2
 	fmul(Zinv,D1D2,ristretto_in->t); // Zinv = D1*D2*T
+
+	fmul(TZinv,ristretto_in->t,Zinv);
+
+	// mozno chybne??
+	if (is_neg(TZinv)){
+		fmul(ix,ristretto_in->x,SQRT_M1); // ix = x*sqrt(-1)
+		fmul(iy,ristretto_in->y,SQRT_M1); // iy = y*sqrt(-1)
+		fmul(D,D1,INVSQRT_A_MINUS_D); // D = D1/√(a-d)  -> 1/√(a-d) ->  INVSQRT_A_MINUS_D
+
+	}
+	
+	else{
+		fcopy(ristretto_in->x,ristretto_in->x);
+		fcopy(ristretto_in->y,ristretto_in->y);
+		fcopy(ristretto_in->z,ristretto_in->z);
+		fcopy(D,D2);
+
+
+		// y = y
+		// D = D2
+	}
 	
 
-	fmul(iX, ristretto_in->x, SQRT_M1);
-	fmul(iY, ristretto_in->y, SQRT_M1);
-
-	fmul(enchanted_denominator,D1,INVSQRT_A_MINUS_D);
-	fmul(tZinv,ristretto_in->t,Zinv);
-
-
-	if (is_neg(tZinv)){
-		fcopy(_X,iY);
-		fcopy(_Y,iX);
-		fcopy(D_inv,enchanted_denominator);
-		
-	}
-	else{
-		fcopy(_X,ristretto_in->x);
-		fcopy(_Y,ristretto_in->y);
-		fcopy(D_inv,D2);
-	}
-	fcopy(_Z,ristretto_in->z);
-
-	fmul(XZ_inv,_X,Zinv);
-
-	if (is_neg(XZ_inv)){
-		fneg(Y,_Y);
-	}
-	else{
-		fcopy(Y,_Y);
+	fmul(xZiv,ristretto_in->x,Zinv);
+	if (is_neg(xZiv)){
+		fneg(_y,ristretto_in->y); // -y
+		fcopy(ristretto_in->y,_y); // y = -y
 	}
 
+	fsub(z_y ,ristretto_in->z,ristretto_in->y);
+	fmul(z_yD,z_y,D);
 
-	fsub(Z_Y,_Z,_Y);
-
-	fmul(temp_s,D_inv,Z_Y);
-
-	if(is_neg(temp_s)){
-		fneg(s,temp_s);
-	}
-	else{
-		fcopy(s,temp_s);
+	if (is_neg(z_yD)){
+		fneg(s,z_yD);
 	}
 
 	pack25519(bytes_out,s);
+	printf("in coding-------\n");
+	print_32(bytes_out);
+	printf("in coding-------\n");
+
+	// if X*Zinv in_neg
+	// then y = - y
+
 
 
 	return 1;

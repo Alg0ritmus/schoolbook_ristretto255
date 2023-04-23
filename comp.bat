@@ -1,1 +1,1 @@
-gcc -w -o main main.c ristretto255.c && main.exe
+gcc -Wall -Wextra -o main main.c ristretto255.c && main.exe

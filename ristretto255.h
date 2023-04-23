@@ -49,7 +49,7 @@ void curve25519_pow_two5mtwo0_two250mtwo0(field_elem b);
 // je mozne nahradit tymto kodom (sv pow2523)?
 // https://github.com/sbp/tweetnacl-tools/blob/master/tweetnacl.c#L382 
 void curve25519_pow_two252m3(field_elem two252m3, const field_elem z);
-void inv_sqrt(field_elem out,const field_elem u, const field_elem v);
+int inv_sqrt(field_elem out,const field_elem u, const field_elem v);
 int feq( const field_elem a,  const field_elem b); // return 1 if two are equal, otherwise 0
 int bytes_eq_32( const unsigned char a[32],  const unsigned char b[32]); // return 1 if two are equal, otherwise 0
 

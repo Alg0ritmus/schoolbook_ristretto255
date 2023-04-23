@@ -34,111 +34,45 @@ int main(){
 
 
 
-	/*
-	printf("inv_sqrt( out, u, const, v)\n");
-	// out u v
 	
-	unpack25519(out,test_vectors_compl[7]);
-	inv_sqrt(inv_sq_field_elem,F_ONE,out);
-	printf("inv_sq_field_elem in main:\n");
-	print(inv_sq_field_elem);
-	printf("\n........................\n");
-	
-	
-
-	
-
-	unpack25519(a,test_vectors_compl[7]); // posledny vector
-	fcopy(out,a); // out = a
-
-	for (int i = 2; i < 8; ++i)
-	{
-
-		fmul(out,out,a); // a*a -> fmul prevziaty z PDF Kleppmann
-		printf("\na^%d:\n",i);
-		print(out);
-		printf("\n-------------\n");
-
-	}
-
-	printf("a^7 z funkcie pow7:\n");
-	pow7(a_out,a);
-	print(a_out);
-
-	*/
-
-	/* testing negative vectors 
-
-
-	printf("\n\ntesting negative vectors:\n");
-	int is_negative=1;
-
-	for (int i = 0; i < 8; ++i){
-		field_elem temp;
-		unpack25519(temp,test_vectors[i]);
-		is_negative = is_negative & is_neg(temp);
-		printf("vector:%d, is:%d\n",i,is_neg(temp));
-	}
-
-	if (is_negative){
-		printf("SUCCESS, all are negative\n");
-	}
-	else{
-		printf("FAILED, NOT all are negative\n");	
-	}
-	*/
-
-
-	printf("!!!!!!!!!!!!!!!!!!!!!!!!	%d\n", test_vectors_compl[7][0]&1);
-
-	//testing complements of negative vectors 
-	printf("\n\ntesting complements of negative vectors:\n");
-	int is_negative=1;
-
-	for (int i = 0; i < 8; ++i){
-		field_elem temp;
-		unpack25519(temp,test_vectors_compl[i]);
-		is_negative = is_negative & is_neg(temp);
-		printf("vector:%d, is:%d\n",i,is_neg(temp));
-	}
-
-	if (!is_negative){
-		printf("SUCCESS, all complements are positive\n");
-	}
-	else{
-		printf("FAILED, NOT all complements are positive\n");	
-	}
-	
-	
-	
-	
-	// skuska modulus
-
-
-
-	printf("skuska\n");
 	ristretto255_point abc; // create struct 
 	ristretto255_point *temp; // create "empty" pointer
 	temp = &abc; // pointer - store address of abc
-	// I can now access value by *temp 
+	// I can now access value by *temp ň
 	
-	fcopy(out,test_vectors_compl[7]);
-	// out == test_vectors_compl[7]
-	ristretto255_decode(temp, out); // passing pointer (address)
+
+	ristretto255_decode(temp, test_vectors_compl[7]); // passing pointer (address)
 	//printf("point cords \n");
 
 	// I can access pointers value (value of obj located at that address)
 	// by using dereferencing * ---> *temp
 	// temp->x is eq to *(temp).x
-
-
-	pack_and_print_32(temp->x); 
-	pack_and_print_32(temp->y);
-	pack_and_print_32(temp->z);
-	pack_and_print_32(temp->t);
-
-
 	
+
+	printf("X:\n");
+	pack_and_print_32(temp->x); 
+
+	printf("Y:\n");
+	pack_and_print_32(temp->y);
+
+	printf("Z:\n");
+	pack_and_print_32(temp->z);
+
+	printf("T:\n");
+	pack_and_print_32(temp->t);
+	
+
+
+	u8 bytes_out_[32];
+	u8 *bytes_out = &(*bytes_out_);
+	ristretto255_encode(bytes_out_, temp);
+	
+	printf("----------\n");
+	printf("vstupny vector:\n");
+	print_32(test_vectors_compl[7]);
+	printf("vystupny vector:\n");
+	print_32(bytes_out_);
+
 
 	
 	
