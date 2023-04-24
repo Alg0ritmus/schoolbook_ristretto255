@@ -1,3 +1,6 @@
+# Spustenie:
+Python - `python test.py`(windows) <br>
+C - `comp.bat`(windows) <br>
 # Progress:
 
 ## 23.4.2023:
