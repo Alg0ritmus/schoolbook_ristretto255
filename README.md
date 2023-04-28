@@ -23,4 +23,4 @@ Warningy som ponechal (ostali len tie s unused variables - tie casto pouzivam pr
 
 Zaver:
 Otestoval som decoding/encoding na vektore VECTOR_TEST2. Po kombinácii de/en-code dostanem input==output. <br>
-Z toho súdim, že impl. by mala byť zatiaľ v poriadku. Ďalším krokom je porovnanie s dalsimi impl. a vytvorenie hash_to_group (kt. chyba v drafte) <br>
+Z toho súdim, že impl. by mala byť zatiaľ v poriadku. Ďalším krokom je porovnanie s dalsimi impl. a vytvorenie hash_to_group (<s>kt. chyba v drafte?</s> <i>element derivation function</i>) <br>
