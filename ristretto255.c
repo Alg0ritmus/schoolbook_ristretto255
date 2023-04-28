@@ -546,8 +546,8 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	// Step 2 calc ristretto255/ge25519 point
 	// a = ± 1
 	pow2(ss,s);
-	fadd(u1,F_ONE,ss); // 1 + as^2
-	fsub(u2,F_ONE,ss); // 1 - as^2
+	fsub(u1,F_ONE,ss); // 1 + as^2
+	fadd(u2,F_ONE,ss); // 1 - as^2
 
 	
 

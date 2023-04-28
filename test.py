@@ -122,6 +122,28 @@ DEC_ALL = [
 ]
 
 
+VECTOR_TEST= [
+	0x76, 0x2d, 0x8d, 0xe0,
+	0x45, 0x59, 0xa6, 0xb6,
+	0x8d, 0xdd, 0x82, 0xa5,
+	0x6a, 0x0b, 0xe3, 0x58,
+	0x5f, 0x51, 0x00, 0xc5,
+	0x61, 0xa9, 0x84, 0xa8,
+	0x71, 0x4e, 0xbc, 0x6a,
+	0x0a, 0xae, 0xf2, 0xe2,
+]
+
+VECTOR_TEST2= [
+	0xe0, 0x8d, 0x2d, 0x76,
+	0xb6, 0xa6, 0x59, 0x45,
+	0xa5, 0x82, 0xdd, 0x8d,
+	0x58, 0xe3, 0x0b, 0x6a,
+	0xc5, 0x00, 0x51, 0x5f,
+	0xa8, 0x84, 0xa9, 0x61,
+	0x6a, 0xbc, 0x4e, 0x71,
+	0xe2, 0xf2, 0xae, 0x11,
+]
+
 
 def fneg(a):
 	return (P-a)
@@ -202,7 +224,7 @@ def inv_sqrt(u,v):
 	# r = (u*v^7) ^ {(p-5)/8}
 	r = curve25519_pow_two252m3(nd_bracket)
 
-	# r2 
+	# r2 = [(u*v^7) ^ {(p-5)/8}] * (u*v^3)
 	r2 = (r * st_bracket) % P
 
 	temp2 = (r2**2) % P
@@ -245,15 +267,15 @@ numToHex(r2,NUMBER_INTERPRETATION_CHOICES["32x8"])
 
 def ristretto255_decode(s):
 	ss = (s*s) % P
-	u1 = (1 + ss) % P
-	u2 = (1 - ss) % P
+	u1 = (1 - ss) % P
+	u2 = (1 + ss) % P
 
 	uu1 = (u1*u1) % P
 	uu2 = (u2*u2) % P
 
 	duu1 = (EDWARDS_D*uu1) % P
 	duu1_neg = fneg(duu1)
-	v = (duu1_neg - uu2) % P # add minus here due to draft
+	v = (duu1_neg - uu2) % P # CHANGE???
 	vuu2 = (v*uu2) % P
 
 	was_square,I = inv_sqrt(1,vuu2)
@@ -325,7 +347,7 @@ def ristretto255_encode(X,Y,Z,T):
 		Y = iX
 		D_inv = enchanted_denominator
 	else:
-		X = X
+		X = X # TODO ??? is it good || x,y = -y,x
 		Y = Y
 		D_inv = D2
 
@@ -349,7 +371,11 @@ def ristretto255_encode(X,Y,Z,T):
 
 
 
-x,y,z,t = ristretto255_decode(DEC_ALL[7])
+
+cislo = hexToNum(VECTOR_TEST2,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+
+#x,y,z,t = ristretto255_decode(DEC_ALL[7])
+x,y,z,t = ristretto255_decode(cislo)
 
 print("\nX:\n")
 numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
@@ -365,3 +391,19 @@ vys = ristretto255_encode(x,y,z,t)
 print("\n RESULT after encode:\n")
 numToHex(vys,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 
+
+
+numToHex(vys,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
+
+
+
+"""
+
+buf = ["e2f2ae0a", "6abc4e71", "a884a961", "c500515f", "58e30b6a", "a582dd8d", "b6a65945", "e08d2d76"]
+
+x = buf[::-1]
+for i in x:
+	#print("0x"+i[6:8]+", "+"0x"+i[4:6]+", "+"0x"+i[2:4]+", "+"0x"+i[0:2]+",")
+	print("0x"+i[0:2]+", "+"0x"+i[2:4]+", "+"0x"+i[4:6]+", "+"0x"+i[6:8]+",")
+
+"""
