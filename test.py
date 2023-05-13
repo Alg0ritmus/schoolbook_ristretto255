@@ -1,150 +1,13 @@
 from convertLib import *
-MINUS_ONE = 115565932813024562229384322928592814283244066726840484812818018414147674303743
-P = (2**255)-19 
-P_HEX = [
-	0xec, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0x7f,
-]
+from constants import *
 
-# Number test vectors
-
-# Hex test vectors
-
-HEX_1 = [
-0x01, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00, 
-0x00, 0x00, 0x00, 0x00,
-]
-
-HEX_2 = [
-0x01, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0xff, 
-0xff, 0xff, 0xff, 0x7f,
-]
-
-HEX_3 = [
-0xed, 0x57, 0xff, 0xd8, 
-0xc9, 0x14, 0xfb, 0x20, 
-0x14, 0x71, 0xd1, 0xc3, 
-0xd2, 0x45, 0xce, 0x3c, 
-0x74, 0x6f, 0xcb, 0xe6, 
-0x3a, 0x36, 0x79, 0xd5, 
-0x1b, 0x6a, 0x51, 0x6e, 
-0xbe, 0xbe, 0x0e, 0x20, 
-]
-
-HEX_4 = [
-0xc3, 0x4c, 0x4e, 0x18, 
-0x26, 0xe5, 0xd4, 0x03, 
-0xb7, 0x8e, 0x24, 0x6e, 
-0x88, 0xaa, 0x05, 0x1c, 
-0x36, 0xcc, 0xf0, 0xaa, 
-0xfe, 0xbf, 0xfe, 0x13, 
-0x7d, 0x14, 0x8a, 0x2b, 
-0xf9, 0x10, 0x45, 0x62, 
-]
-
-HEX_5 = [
-0xc9, 0x40, 0xe5, 0xa4, 
-0x40, 0x41, 0x57, 0xcf, 
-0xb1, 0x62, 0x8b, 0x10, 
-0x8d, 0xb0, 0x51, 0xa8, 
-0xd4, 0x39, 0xe1, 0xa4, 
-0x21, 0x39, 0x4e, 0xc4, 
-0xeb, 0xcc, 0xb9, 0xec, 
-0x92, 0xa8, 0xac, 0x78, 
-]
-
-HEX_6 = [
-0x47, 0xcf, 0xc5, 0x49, 
-0x7c, 0x53, 0xdc, 0x8e, 
-0x61, 0xc9, 0x1d, 0x17, 
-0xfd, 0x62, 0x6f, 0xfb, 
-0x1c, 0x49, 0xe2, 0xbc, 
-0xa9, 0x4e, 0xed, 0x05, 
-0x22, 0x81, 0xb5, 0x10, 
-0xb1, 0x11, 0x7a, 0x24, 
-]
-
-HEX_7 = [
-0xf1, 0xc6, 0x16, 0x5d, 
-0x33, 0x36, 0x73, 0x51, 
-0xb0, 0xda, 0x8f, 0x6e, 
-0x45, 0x11, 0x01, 0x0c, 
-0x68, 0x17, 0x4a, 0x03, 
-0xb6, 0x58, 0x12, 0x12, 
-0xc7, 0x1c, 0x0e, 0x1d, 
-0x02, 0x6c, 0x3c, 0x72, 
-]
-
-HEX_8 = [
-0x87, 0x26, 0x0f, 0x7a, 
-0x2f, 0x12, 0x49, 0x51, 
-0x18, 0x36, 0x0f, 0x02, 
-0xc2, 0x6a, 0x47, 0x0f, 
-0x45, 0x0d, 0xad, 0xf3, 
-0x4a, 0x41, 0x3d, 0x21, 
-0x04, 0x2b, 0x43, 0xb9, 
-0xd9, 0x3e, 0x13, 0x09,
-]
+from bernstein import Fadd
+from libsodium_add import ge25519_p3_add
+from edwardsc_paper_add import edwards_addition
 
 
-HEX_ALL = [
-	HEX_1,HEX_2,HEX_3,HEX_4,
-	HEX_5,HEX_6,HEX_7,HEX_8,
-]
 
-DEC_ALL = [
-57896044618658097711785492504343953926634992332820282019728792003956564819948,
-236,
-43395981139273074876507941764684574595537234604803325968249716566753441523712,
-13447355864474782990064147865452522366103789347284224292039261867954817577770,
-3313441639055640068739630253660246146533292736357745798877292175242976476964,
-41397104624399426060398833257223205409790519106274891578395515334690214654118,
-6225623610693817694070834656612723216338662007248481655499821746921891510524,
-53791225109085577843242291480306666131143723373880160896372464448377688480102,
-]
-
-
-VECTOR_TEST= [
-	0x76, 0x2d, 0x8d, 0xe0,
-	0x45, 0x59, 0xa6, 0xb6,
-	0x8d, 0xdd, 0x82, 0xa5,
-	0x6a, 0x0b, 0xe3, 0x58,
-	0x5f, 0x51, 0x00, 0xc5,
-	0x61, 0xa9, 0x84, 0xa8,
-	0x71, 0x4e, 0xbc, 0x6a,
-	0x0a, 0xae, 0xf2, 0xe2,
-]
-
-VECTOR_TEST2= [
-	0xe0, 0x8d, 0x2d, 0x76,
-	0xb6, 0xa6, 0x59, 0x45,
-	0xa5, 0x82, 0xdd, 0x8d,
-	0x58, 0xe3, 0x0b, 0x6a,
-	0xc5, 0x00, 0x51, 0x5f,
-	0xa8, 0x84, 0xa9, 0x61,
-	0x6a, 0xbc, 0x4e, 0x71,
-	0xe2, 0xf2, 0xae, 0x11,
-]
-
-
+# curve25519 == fe25519 ARITHMETIC, ristretto255 uses this internally
 def fneg(a):
 	return (P-a)
 
@@ -162,6 +25,10 @@ def pow_xtimes(a,n):
 		out=fmul(out,out)
 	return out
 
+def fabs(x):
+	return fneg(x) if is_neg(x) else x
+
+# curve25519 == fe25519 SPECIAL FUNCTIONS
 
 def curve25519_pow_two5mtwo0_two250mtwo0(b):
 	t0 = 0
@@ -203,7 +70,7 @@ def curve25519_pow_two252m3(z):
 
 
 
-
+# Ristretto255 functions
 
 def inv_sqrt(u,v):
 	# v^3
@@ -257,14 +124,6 @@ def inv_sqrt(u,v):
 
 
 
-"""
-print("\nend:\n")
-u = 1
-v = DEC_ALL[7]
-r2 = inv_sqrt(u,v)
-numToHex(r2,NUMBER_INTERPRETATION_CHOICES["32x8"])
-"""
-
 def ristretto255_decode(s):
 	ss = (s*s) % P
 	u1 = (1 - ss) % P
@@ -275,7 +134,7 @@ def ristretto255_decode(s):
 
 	duu1 = (EDWARDS_D*uu1) % P
 	duu1_neg = fneg(duu1)
-	v = (duu1_neg - uu2) % P # CHANGE???
+	v = (duu1_neg - uu2) % P 
 	vuu2 = (v*uu2) % P
 
 	was_square,I = inv_sqrt(1,vuu2)
@@ -288,11 +147,6 @@ def ristretto255_decode(s):
 	sDx = (s*Dx) % P
 	x = (sDx+sDx) % P
 
-	"""
-	print("\nx:\n")
-	numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"])
-	print("\nx-------:\n")
-	"""
 
 	if is_neg(x):
 		abs_x = fneg(x)
@@ -347,7 +201,7 @@ def ristretto255_encode(X,Y,Z,T):
 		Y = iX
 		D_inv = enchanted_denominator
 	else:
-		X = X # TODO ??? is it good || x,y = -y,x
+		X = X 
 		Y = Y
 		D_inv = D2
 
@@ -370,40 +224,144 @@ def ristretto255_encode(X,Y,Z,T):
 	return s 
 
 
+# MAP == MAP2 len inak napisana
+def MAP(t): # also known as ristretto255_elligator
+	
+	tt = (t*t) % P
+	r =  (SQRT_M1 * tt) % P
+	r1 =  (r +1) % P
+	u = (r1 * ONE_MINUS_D_SQ) % P
+	rD = (r*EDWARDS_D) % P
+	r_plus_D = (r+EDWARDS_D) % P
+	_1 = fneg(1) 
+	_1_rD = (_1 - rD) % P
+	v = (_1_rD * r_plus_D) % P
+
+	was_square, s = inv_sqrt(u,v)
+
+	st = (s*t) % P
+	
+
+	if is_neg(st):
+		s_prime = fneg(st)
+	else:
+		s_prime = st
+
+	s_prime = fneg(s_prime)
+	
+
+	if was_square:
+		s = s
+		c = _1
+	else:
+		s = s_prime
+		c = r
+
+	
+	r_1 = (r - 1) % P
+	cr_1 = (c*r_1) % P
+	temp = (cr_1 * D_MINUS_ONE_SQ) % P
+	N = (temp-v) % P
 
 
-cislo = hexToNum(VECTOR_TEST2,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	ss = (s*s) % P
+	s_ = (s+s) % P
 
-#x,y,z,t = ristretto255_decode(DEC_ALL[7])
-x,y,z,t = ristretto255_decode(cislo)
+	w0 =  (s_ * v) % P
+	w1 =  (N * SQRT_AD_MINUS_ONE ) % P
+	w2 = (1 - ss ) % P
+	w3 = (1 + ss) % P
 
-print("\nX:\n")
-numToHex(x,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-print("\nY:\n")
-numToHex(y,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-print("\nZ:\n")
-numToHex(z,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-print("\nT:\n")
-numToHex(t,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-
-
-vys = ristretto255_encode(x,y,z,t)
-print("\n RESULT after encode:\n")
-numToHex(vys,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	
+	return (
+		((w0*w3) % P),
+		((w2*w1) % P),
+		((w1*w3) % P),
+		((w0*w2) % P) 
+		)
 
 
 
-numToHex(vys,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
+def MAP2(t): # also known as ristretto255_elligator 
+	
+	r = (SQRT_M1 * t * t) %P 
+	u = ((r + 1) * ONE_MINUS_D_SQ) % P
+	v = ((-1 - r*EDWARDS_D) * (r + EDWARDS_D)) % P
+
+	was_square, s = inv_sqrt(u,v)
+	st = (s*t) % P
+	s_prime = fneg(fabs(st))
+	
+
+	if  was_square:
+		s = s
+		c = -1
+	else:
+		s = s_prime
+		c = r 
+
+	N = (c* (r -1 )) % P
+	N = (N * D_MINUS_ONE_SQ) % P
+	N = ( N - v) % P
+	
+	w0 = (2 * s * v) % P
+	w1 = (N * SQRT_AD_MINUS_ONE) % P
+	w2 = (1 - s*s) % P
+	w3 = (1 + s*s) % P
+
+
+	return (
+		((w0*w3) % P),
+		((w2*w1) % P),
+		((w1*w3) % P),
+		((w0*w2) % P) 
+		)
 
 
 
-"""
+# source: unknown
+def special_addition(W,V):
 
-buf = ["e2f2ae0a", "6abc4e71", "a884a961", "c500515f", "58e30b6a", "a582dd8d", "b6a65945", "e08d2d76"]
+	A = ((W[1] - W[0]) * (V[1] - V[0])) % P
+	B = ((W[1] + W[0]) * (V[1] + V[0])) % P
+	C = (2 * EDWARDS_D * W[2] * V[2]) % P
+	D = (2 * W[3] * V[3]) % P
+	E = (B - A) % P
+	F = (D - C) % P
 
-x = buf[::-1]
-for i in x:
-	#print("0x"+i[6:8]+", "+"0x"+i[4:6]+", "+"0x"+i[2:4]+", "+"0x"+i[0:2]+",")
-	print("0x"+i[0:2]+", "+"0x"+i[2:4]+", "+"0x"+i[4:6]+", "+"0x"+i[6:8]+",")
+	# Compute the output point
+	x3 = ((E*3 - F*F) * (W[2] * V[2])) % P
+	y3 = (E * (F * (W[0] * V[1] + W[1] * V[0]) + A * B)) % P
+	z3 = (F * E * W[2] * V[2]) % P
+	t3 = (E * (F * (W[1] * V[1] + W[0] * V[0]) - A * B)) % P
 
-"""
+	R = (x3, y3, t3, z3)
+	return R
+
+
+
+def hash_to_group(input):
+	# rozdel hash_input na 2 polky a kazdu polku premen na cislo (python podporuje aj aritmetuku s velkymi cislami)
+	t1,t2 = hash_to_num(input)
+	t1,t2 = t1%P, t2%P
+	
+	a = MAP2(t1) # MAP == elligator
+	b = MAP2(t2)
+
+	# scitanie
+	r = Fadd(a,b) # ADD z TweetNaCl -> bernstein.py
+	r2 = edwards_addition(a,b) # scitanie z paper -> edwardsc_paper_add.py
+	r3 = ge25519_p3_add(a,b) # add z libsodia -> libsodium_add.py
+
+	R = ristretto255_encode(*r) 
+	
+	# iba vypis 
+	numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
+	
+HASH_VECTOR = "5d1be09e3d0c82fc538112490e35701979d99e06ca3e2b5b54bffe8b4dc772c14d98b696a1bbfb5ca32c436cc61c16563790306c79eaca7705668b47dffe5bb6"
+hash_to_group(HASH_VECTOR)
+
+
+
+

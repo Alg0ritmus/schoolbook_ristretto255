@@ -3,11 +3,7 @@ NUMBER_INTERPRETATION_CHOICES={
 	"16x16" : [16,16]
 }
 
-P = (2**255)-19 
 
-SQRT_M1 = 19681161376707505956807079304988542015446066515923890162744021073123829784752	
-EDWARDS_D = 37095705934669439343138083508754565189542113879843219016388785533085940283555
-INVSQRT_A_MINUS_D = 54469307008909316920995813868745141605393597292927456921205312896311721017578
 def hexToNum(input,interpret,b):
 	sum = 0
 
@@ -64,3 +60,38 @@ def MSG(message):
 	print("|  "+message+"|")
 	print("*"*(len(message)+3))
 	print("\n\n")
+
+
+
+# helper function -> make 2 halves from hash_string and convert it into 2 arrays of bytes
+def hash_to_bytes(str_hash):
+	P1,P2 = str_hash[:64],str_hash[64:]
+	P1_bytes, P2_bytes = [],[]
+	for i in range(2,66,2):
+		P1_bytes.append((int(P1[i-2:i],16)))
+		P2_bytes.append((int(P2[i-2:i],16)))
+
+	
+	return (P1_bytes,P2_bytes)
+
+
+# helper function -> make 2 halves from hash_string and convert it into 2 numbers
+def hash_to_num(str_hash):
+	x1,x2 = hash_to_bytes(str_hash)
+	x1,x2 = hexToNum(x1,NUMBER_INTERPRETATION_CHOICES["32x8"],False),hexToNum(x2,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+
+	return (x1,x2)
+
+
+
+# poznamky pre mna:
+# t1= [93, 27, 224, 158, 61, 12, 130, 252, 83, 129, 18, 73, 14, 53, 112, 25, 121, 217, 158, 6, 202, 62, 43, 91, 84, 191, 254, 139, 77, 199, 114, 193]
+
+
+
+# TEST VECTOR hash to group:
+#5d1be09e3d0c82fc538112490e35701979d99e06ca3e2b5b54bffe8b4dc772c14d98b696a1bbfb5ca32c436cc61c16563790306c79eaca7705668b47dffe5bb6
+
+# IN = bytes.fromhex("5d1be09e3d0c82fc538112490e35701979d99e06ca3e2b5b54bffe8b4dc772c14d98b696a1bbfb5ca32c436cc61c16563790306c79eaca7705668b47dffe5bb6")
+# import ge25519 as g
+# g.ge25519_p3.from_hash_ristretto255(IN).hex()

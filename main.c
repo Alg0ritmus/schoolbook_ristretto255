@@ -74,7 +74,6 @@ int main(){
 
 
 	u8 bytes_out_[32];
-	u8 *bytes_out = bytes_out_;
 	ristretto255_encode(bytes_out_, temp);
 	
 	printf("----------\n");
