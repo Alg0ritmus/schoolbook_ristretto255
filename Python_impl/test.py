@@ -5,7 +5,7 @@ import vectors
 from libsodium_add import ge25519_p3_add
 
 # This is an school_book/prototype implementation of ristretto255 writen purely in Python.
-# Warning: this implementation is not suitable for production by any mean.
+# Warning: this implementation is not suitable for production by any means.
 # It is not secure nor fast, but can it serves as learning tool for better understanding of ristretto255.
 
 # In this implementation we use python int for internal calculations. 
