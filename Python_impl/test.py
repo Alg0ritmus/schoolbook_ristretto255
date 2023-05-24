@@ -337,8 +337,8 @@ def hash_to_group(input):
 	t1,t2 = t1% (2**255), t2%(2**255) # masking LSB: according to draft (4.3.4. Element derivation) we need to mask LSB which is equivalent to modulo 2**255
 
 	
-	a = MAP(t1) # map(ristretto_elligator) first halve 
-	b = MAP(t2) # map(ristretto_elligator) second halve 
+	a = MAP(t1) # map(ristretto_elligator) first half
+	b = MAP(t2) # map(ristretto_elligator) second half 
 
 	# a + b, this is addition of 2 points on edward's curve 
 	# inspired by C cryptographic library "libsodium"
