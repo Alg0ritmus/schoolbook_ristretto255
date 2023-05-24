@@ -347,7 +347,7 @@ def hash_to_group(input):
 
 	R = ristretto255_encode(*r) # encode "r"" so you get bytes from point
 	
-	# convert and print the rusult, note that "R" is inteeger in our internal representation
+	# convert and print result, note that "R" is inteeger in our internal representation
 	# so convertion is needed to get bytes [32x8] or [16x16]
 	# for more details about convertion please check convertionLib.py 
 	numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
