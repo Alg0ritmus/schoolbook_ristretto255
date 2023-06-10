@@ -3,6 +3,12 @@ Python - `python test.py`(windows) <br>
 C - `comp.bat`(windows) <br>
 # Progress:
 
+## 10.6.2023
+Uspesne som implementoval som funkciu hash_to_group a otestoval pomocou testovacich vektorov z draftu aj pre jazyk C. Trochu som kod precistil <br>
+Dalsim krokom bude re-implementovat niektore funkcie ako vykonavali ukony v konstantnom case (napr absolut. hodnota + implementovat (CT_SELECT, CT_EQ, CT_NEG, CT_ABS)).<br>
+
+ <br>
+
 ## 24.5.2023
 Uspesne som implementoval som funkciu hash_to_group a otestoval pomocou testovacich vektorov z draftu. Od poslednej upravy kodu som prisiel na to, <br>
 ze chyba v hash_to_group suvisela najma s maskovanim LSB + s nejakymi inymi mensimi chybami v kode. Zaroven scitanie bodov bodov vo funkcii hash_to_group <br>

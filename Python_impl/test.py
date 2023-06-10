@@ -335,7 +335,6 @@ def hash_to_group(input):
 	
 	t1,t2 = hash_to_num(input) # hash_to_num defined in convertLib.py -> returns 2 inteegers (first and second half)
 	t1,t2 = t1% (2**255), t2%(2**255) # masking LSB: according to draft (4.3.4. Element derivation) we need to mask LSB which is equivalent to modulo 2**255
-
 	
 	a = MAP(t1) # map(ristretto_elligator) first half
 	b = MAP(t2) # map(ristretto_elligator) second half 
@@ -348,8 +347,8 @@ def hash_to_group(input):
 	R = ristretto255_encode(*r) # encode "r"" so you get bytes from point
 	
 	# convert and print result, note that "R" is inteeger in our internal representation
-	# so convertion is needed to get bytes [32x8] or [16x16]
-	# for more details about convertion please check convertionLib.py 
+	# so conversion is needed to get bytes [32x8] or [16x16]
+	# for more details about conversion please check convertionLib.py 
 	numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 	numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
 

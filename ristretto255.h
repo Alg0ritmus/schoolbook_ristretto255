@@ -40,6 +40,7 @@ void scalarmult(u8 *out, const u8 *scalar, const u8 *point);
 
 // mine funkcie
 void fcopy(field_elem out, const field_elem in);
+void b_copy(u8 out[32], const u8 in[32]);
 void fneg(field_elem out, const field_elem in);
 void pow2(field_elem out, const field_elem a);
 void pow3(field_elem out, const field_elem a);
@@ -52,6 +53,7 @@ void curve25519_pow_two252m3(field_elem two252m3, const field_elem z);
 int inv_sqrt(field_elem out,const field_elem u, const field_elem v);
 int feq( const field_elem a,  const field_elem b); // return 1 if two are equal, otherwise 0
 int bytes_eq_32( const unsigned char a[32],  const unsigned char b[32]); // return 1 if two are equal, otherwise 0
+void fabsolute(field_elem out, const field_elem in);
 
 // funguje???
 void fneg(field_elem out, const field_elem in);
@@ -64,5 +66,12 @@ int is_neg(const field_elem in); // return 1 if it's negative
 
 int ristretto255_decode(ristretto255_point *ristretto_out, const unsigned char bytes_in[32]);
 int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point *ristretto_in);
+
+int MAP(ristretto255_point* ristretto_out, const field_elem t);
+void ge25519_p3_add(ristretto255_point* r,const ristretto255_point* p,const ristretto255_point* q);
+void ge25519_p3_to_cached(ristretto255_point* p_out,const ristretto255_point* p);
+void ge25519_add_cached(ristretto255_point* r,const ristretto255_point* p,const ristretto255_point* q);
+void ge25519_p1p1_to_p3(ristretto255_point* r,const ristretto255_point* p);
+int hash_to_group(u8 bytes_out[32], const u8 bytes_in[64]);
 
 #endif //_RISTRETTO255_H

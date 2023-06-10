@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -o main main.c ristretto255.c && main.exe
+gcc -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe

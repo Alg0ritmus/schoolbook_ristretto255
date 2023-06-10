@@ -1,5 +1,6 @@
 #define DEBUGGING  1
 #include "ristretto255.h"
+#include "constants.h"
 
 /*		UTILS		*/
 void print(field_elem o){
@@ -30,52 +31,6 @@ void print_32(const u8* o){
 }
 
 /*-----------------------------------*/
-
-
-// little-endian order --> a = a0*2^0 + a1*2^16 + a2*2^32 + ... + a15*2^240 (vzdy o ax*2^ o15 vyssie)
-const field_elem F_ZERO = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-const field_elem F_ONE = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-const field_elem F_TWO = {2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-const field_elem F_BIGGEST = {	32767,32767,32767,32767,
-								32767,32767,32767,32767,
-								32767,32767,32767,32767,
-								32767,32767,32767,32767
-};
-
-const field_elem _121665 = {0xDB41, 1};
-
-// 2^255 - 19 -> from script convert_num_to_bernstein.py
-const field_elem F_MODULUS = {
-	0xffed, 0xffff, 0xffff, 0xffff,
-	0xffff, 0xffff, 0xffff, 0xffff,
-	0xffff, 0xffff, 0xffff, 0xffff,
-	0xffff, 0xffff, 0xffff, 0x7fff
-};
-
-
-const field_elem SQRT_M1 = {
-	0xa0b0, 0x4a0e, 0x1b27, 0xc4ee,
-	0xe478, 0xad2f, 0x1806, 0x2f43,
-	0xd7a7, 0x3dfb, 0x99, 	0x2b4d,
-	0xdf0b, 0x4fc1, 0x2480, 0x2b83
-};
-
-const field_elem EDWARDS_D = {
-	0x78a3, 0x1359, 0x4dca, 0x75eb,
-	0xd8ab, 0x4141, 0xa4d, 0x70,
-	0xe898, 0x7779, 0x4079, 0x8cc7,
-	0xfe73, 0x2b6f, 0x6cee, 0x5203
-
-};
-
-const field_elem INVSQRT_A_MINUS_D  = {
-	0x40ea, 0x805d, 0xfdaa, 0x99c8,
-	0x72be, 0x5a41, 0x1617, 0x9d2f,
-	0xd840, 0xfe01, 0x7b91, 0x16c2,
-	0xfca2, 0xcfaf, 0x8905, 0x786c
-};
-
 
 void unpack25519(field_elem out, const u8 *in)
 {
@@ -268,6 +223,13 @@ void fcopy(field_elem out, const field_elem in){
 
 }
 
+void b_copy(u8 out[32], const u8 in[32]){
+	for (int i = 0; i < 32; ++i)
+	{
+		out[i]  = in[i];
+	}
+}
+
 // negation of element a -> p-a = -a 
 // inspired by: https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_51.h#L94
 
@@ -291,6 +253,14 @@ int is_neg_bytes(const u8 in[32]){
 	return in[0] & 1;
 }
 
+void fabsolute(field_elem out, const field_elem in){
+	if (is_neg(in)){
+		fneg(out,in);
+	}
+	else{
+		fcopy(out,in);
+	}
+}
 
 
  // square a˘2
@@ -375,53 +345,6 @@ void curve25519_pow_two252m3(field_elem two252m3, const field_elem z){
 	/* 2^252 - 3 */ fmul(two252m3, b, z);
 }
 
-
-// copied from:
-// https://github.com/sbp/tweetnacl-tools/blob/master/tweetnacl.c#L382
-#define FOR(i,n) for (i = 0;i < n;++i)
-#define sv static void
-
-sv car25519(field_elem o)
-{
-  int i;
-  i64 c;
-  FOR(i,16) {
-    o[i]+=(1LL<<16);
-    c=o[i]>>16;
-    o[(i+1)*(i<15)]+=c-1+37*(c-1)*(i==15);
-    o[i]-=c<<16;
-  }
-}
-
-sv M(field_elem o,const field_elem a,const field_elem b)
-{
-  i64 i,j,t[31];
-  FOR(i,31) t[i]=0;
-  FOR(i,16) FOR(j,16) t[i+j]+=a[i]*b[j];
-  FOR(i,15) t[i]+=38*t[i+16];
-  FOR(i,16) o[i]=t[i];
-  car25519(o);
-  car25519(o);
-}
-
-sv S(field_elem o,const field_elem a)
-{
-  M(o,a,a);
-}
-sv pow2523(field_elem o,const field_elem i)
-{
-  field_elem c;
-  int a;
-  FOR(a,16) c[a]=i[a];
-  for(a=250;a>=0;a--) {
-    S(c,c);
-    if(a!=1) M(c,c,i);
-  }
-  FOR(a,16) o[a]=c[a];
-}
-
-
-
 // function that calc ristretto255 inverse square root
 // https://ristretto.group/formulas/invsqrt.html
 
@@ -433,15 +356,13 @@ sv pow2523(field_elem o,const field_elem i)
 // code inspired by:
 // https://github.com/isislovecruft/ristretto-donna/blob/master/src/ristretto-donna.c#L97
 int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
-	field_elem temp,temp2, v3, v7, p58, st_bracket, nd_bracket, r,r2, check, u_neg,u_neg_i, r_prime,r_negative;
-	u8 r_bytes;
+	field_elem temp2, v3, v7, st_bracket, nd_bracket, r,r2, check, u_neg,u_neg_i, r_prime,r_negative;
 	int r_is_negative;
 	int correct_sign_sqrt;
 	int flipped_sign_sqrt;
 	int flipped_sign_sqrt_i;
 	int was_nonzero_square;
 	int should_rotate;
-	u8 temp_bytes[32];
 
 
 	pow3(v3,v); 							//v^3
@@ -453,7 +374,7 @@ int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 
 	
 	curve25519_pow_two252m3(r,nd_bracket); 	// r = (u*v^7) ^ {(p-5)/8}
-	//pow2523(r,nd_bracket);
+	
 	
 	fmul(r2,r,st_bracket);					// r2 = (u*v^3) * (u*v^7) ^ {(p-5)/8}
 
@@ -485,20 +406,11 @@ int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 
 	r_is_negative = is_neg(r2);
 	fneg(r_negative, r2);
-	/*
-	printf("\nPrint check r:\n");
-	print(r2);
-	print(r_negative);
-	printf("r:%d r_negative ma byt pozitivne:%d\n",r_is_negative,is_neg(r_negative));
-	*/
+
 	swap25519(r2, r_negative, r_is_negative);
 
-
-	//printf("\n r2 after swap %d:\n",r_is_negative);
-	//print(r2);
-
 	was_nonzero_square = correct_sign_sqrt | flipped_sign_sqrt;
-	//printf("\nwas_nonzero_square = %d\n", was_nonzero_square);
+
 
 	// output
 	fcopy(out,r2);
@@ -507,13 +419,6 @@ int inv_sqrt(field_elem out,const field_elem u, const field_elem v){
 }
 
 
-/*
-
-typedef struct ge_point25519{
-	field_elem x,y,z,t;
-}ristretto255_point;
-
-*/
 
 // generate ristretto point from bytes[32]
 int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]){
@@ -527,7 +432,7 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 
 	int is_canonical, is_negative;
 
-	u8 checked_bytes[32], temporary[32];
+	u8 checked_bytes[32];
 
 	// Step 1: Check that the encoding of the field element is canonical
 	unpack25519(s, bytes_in);
@@ -577,12 +482,6 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	fmul(sDx,s,Dx);
 	fadd(x,sDx,sDx); // 2sDx
 
-	/*
-	pack25519(temporary,x);
-	printf("\nx:\n");
-	print_32(temporary);
-	*/
-
 	if (is_neg(x)){
 		fneg(abs_x,x); // |2sDx|
 
@@ -621,8 +520,8 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 
 int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* ristretto_in){
 
-	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2,D, D1D2,Zinv, iX, iY, enchanted_denominator, tZinv;
-	field_elem _X, _Y,_Z, D_inv,XZ_inv,Y,temp_s,s,Z_Y;
+	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2, D1D2,Zinv, iX, iY, enchanted_denominator, tZinv;
+	field_elem _X, _Y,_Z, D_inv,XZ_inv,temp_s,s,Z_Y;
 
 	fadd(temp_zy1,ristretto_in->z,ristretto_in->y);
 	fsub(temp_zy2,ristretto_in->z,ristretto_in->y);
@@ -665,10 +564,10 @@ int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* r
 	fmul(XZ_inv,_X,Zinv);
 
 	if (is_neg(XZ_inv)){
-		fneg(Y,_Y);
+		fneg(_Y,_Y);
 	}
 	else{
-		fcopy(Y,_Y);
+		fcopy(_Y,_Y);
 	}
 
 
@@ -693,8 +592,147 @@ int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* r
 
 
 
+int MAP(ristretto255_point* ristretto_out, const field_elem t){
+	field_elem r,u,c,rpd,v,s,s_prime,n, w0,w1,w2,w3,ss,x1,y1,z1,t1;
+	int was_square, wasnt_square;
+
+	fmul(r,t,t);
+	fmul(r,SQRT_M1,r);
+	fadd(u,r,F_ONE);
+	fmul(u,u,ONE_MINUS_D_SQ);
+	fneg(c,F_ONE);
+
+	fadd(rpd,r,EDWARDS_D);
+	fmul(v,r,EDWARDS_D);
+	fsub(v,c,v);
+	fmul(v,v,rpd);
+
+	was_square = inv_sqrt(s,u,v);
+	wasnt_square = 1 - was_square;
+
+	fmul(s_prime,s,t);
+	fabsolute(s_prime,s_prime);
+	fneg(s_prime,s_prime);
+
+	if (wasnt_square){
+		fcopy(s,s_prime);
+		fcopy(c,r);
+	}
+
+	fsub(n,r,F_ONE);
+	fmul(n,n,c);
+	fmul(n,n,D_MINUS_ONE_SQ);
+	fsub(n,n,v);
+
+	fadd(w0,s,s);
+	fmul(w0,w0,v);
+	fmul(w1,n,SQRT_AD_MINUS_ONE);
+	fmul(ss,s,s);
+	fsub(w2,F_ONE,ss);
+	fadd(w3,F_ONE,ss);
+
+	
+
+	fmul(x1,w0,w3);
+	fmul(y1,w2,w1);
+	fmul(z1,w1,w3);
+	fmul(t1,w0,w2);
+
+	fcopy(ristretto_out->x, x1);
+	fcopy(ristretto_out->y, y1);
+	fcopy(ristretto_out->z, z1);
+	fcopy(ristretto_out->t, t1); 
 
 
+	return 1;
+}
+
+
+// LIBSODIUM ADD
+void ge25519_p3_add(ristretto255_point* r,const ristretto255_point* p,const ristretto255_point* q){
+	ristretto255_point q_cached_point;
+	ristretto255_point *q_cached = &q_cached_point;
+
+	ristretto255_point p1p1_point;
+	ristretto255_point *p1p1 = &p1p1_point;
+
+	ge25519_p3_to_cached(q_cached,q);
+	ge25519_add_cached(p1p1,p,q_cached);
+	ge25519_p1p1_to_p3(r,p1p1);
+}
+
+void ge25519_p3_to_cached(ristretto255_point* p_out,const ristretto255_point* p){
+
+
+	fadd(p_out->x, p->y,p->x);
+	fsub(p_out->y, p->y,p->x);
+	fcopy(p_out->z, p->z);
+	fmul(p_out->t, p->t,EDWARDS_D2); 
+}
+
+
+void ge25519_add_cached(ristretto255_point* r,const ristretto255_point* p,const ristretto255_point* q){
+	field_elem t;
+
+	fadd(r->x,p->y,p->x);
+	fsub(r->y,p->y,p->x);
+
+	fmul(r->z,r->x,q->x);
+	fmul(r->y,r->y,q->y);
+	fmul(r->t,q->t,p->t);
+	fmul(r->x,p->z,q->z);
+
+	fadd(t,r->x,r->x);
+	fsub(r->x,r->z,r->y);
+	fadd(r->y,r->z,r->y);
+	fadd(r->z,t,r->t);
+	fsub(r->t,t,r->t);
+}
+	
+void ge25519_p1p1_to_p3(ristretto255_point* r,const ristretto255_point* p){
+	fmul(r->x,p->x,p->t);
+	fmul(r->y,p->y,p->z);
+	fmul(r->z,p->z,p->t);
+	fmul(r->t,p->x,p->y);
+
+}
+///
+
+
+int hash_to_group(u8 bytes_out[32], const u8 bytes_in[64]){
+	ristretto255_point a_point;
+	ristretto255_point *a = &a_point;
+
+	ristretto255_point b_point;
+	ristretto255_point *b = &b_point;
+
+	ristretto255_point r_point;
+	ristretto255_point *r = &r_point;
+	
+
+	// make halves
+	u8 t1[32], t2[32];
+	b_copy(t1,bytes_in);
+	b_copy(t2,bytes_in+32);
+
+	
+	// MASK LSB for each half
+	t1[31] &= 0x7F;
+	t2[31] &= 0x7F;
+
+	// encode t1,t2 to field_elem
+	field_elem ft1,ft2;
+	unpack25519(ft1,t1);
+	unpack25519(ft2,t2);
+	MAP(a,ft1); // map(ristretto_elligator) first half
+	MAP(b,ft2); // map(ristretto_elligator) second hal
+
+	ge25519_p3_add(r,a,b);
+
+	ristretto255_encode(bytes_out, r);
+
+	return 1;
+}
 
 
 
