@@ -44,11 +44,11 @@ def ge25519_p3_add(p,q):
 	p1p1 = ge25519_add_cached(p,q_cached)
 	r = ge25519_p1p1_to_p3(p1p1)
 	
-	print("----TESTq_cached---\n")
-	numToHex(r[0],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-	numToHex(r[1],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-	numToHex(r[2],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-	numToHex(r[3],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	#print("----TESTq_cached---\n")
+	#numToHex(r[0],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	#numToHex(r[1],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	#numToHex(r[2],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	#numToHex(r[3],NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 	return r #-> (x,y,z,t)
 
 

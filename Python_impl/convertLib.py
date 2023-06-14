@@ -48,7 +48,7 @@ def numToHex(BIG_NUMBER,interpret,b):
 
 	if b == True:
 		for i in range(len(result)):
-		  if i%4==0:
+		  if i%100==0:
 		    print()
 		  print(hex(result[i]), end=", ")
 		print("\n")

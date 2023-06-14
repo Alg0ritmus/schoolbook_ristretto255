@@ -350,11 +350,14 @@ def hash_to_group(input):
 	# so conversion is needed to get bytes [32x8] or [16x16]
 	# for more details about conversion please check convertionLib.py 
 	numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
-	numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
+	#numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
 
-	return r
+	return R
 
 
-HASH_VECTOR = vectors.INPUT_VECTORS_HASH_TO_GROUP_STATIC_HEXSTRING[0] # vector from vectors.py	
-hash_to_group(HASH_VECTOR)
+HASH_VECTOR = vectors.INPUT_VECTORS_HASH_TO_GROUP_STATIC_HEXSTRING # vector from vectors.py	
+for i in HASH_VECTOR:
+	#print([hex(j) for j in bytes.fromhex(i)],",")
+	hash_to_group(i)
 
+print(len(HASH_VECTOR))

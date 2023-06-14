@@ -1,34 +1,6 @@
-#define DEBUGGING  1
 #include "ristretto255.h"
 #include "constants.h"
-
-/*		UTILS		*/
-void print(field_elem o){
-
-//	printf("PRINT: ");
-	for (int i=0;i<16;i++){
-		printf("%llx ", o[i]);
-		
-	}
-	printf("\n");
-}
-
-
-void pack_and_print_32(field_elem o){
-	u8 temp[32];
-	pack25519(temp,o);
-	print_32(temp);
-}
-
-void print_32(const u8* o){
-
-//	printf("PRINT: ");
-	for (int i=0;i<32;i++){
-		printf("%02hx ", o[i]);
-		
-	}
-	printf("\n");
-}
+#include "utils.h"
 
 /*-----------------------------------*/
 
@@ -196,7 +168,6 @@ int bytes_eq_32( const u8 a[32],  const u8 b[32]){
 
 	for (int i = 0; i < 32; ++i){
 		result &= a[i] == b[i];
-		//printf("a=%02hhx| b=%02hhx \n",a[i],b[i] );
 	}
 
 	return result;
@@ -240,6 +211,7 @@ void fneg(field_elem out, const field_elem in){
 	carry25519(out);
 };
 
+
 // https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_25_5.h#L302
 int is_neg(const field_elem in){
 	u8 temp[32];
@@ -254,12 +226,17 @@ int is_neg_bytes(const u8 in[32]){
 }
 
 void fabsolute(field_elem out, const field_elem in){
-	if (is_neg(in)){
-		fneg(out,in);
-	}
-	else{
-		fcopy(out,in);
-	}
+	field_elem temp;
+	fcopy(temp,in); // temp=in, so I dont rewrite in
+
+	fneg(out,temp); // out = ~in
+	
+
+	// CT_SWAP if it is neg.
+	swap25519(out,temp,is_neg(in));
+
+
+
 }
 
 
@@ -428,7 +405,7 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	field_elem s, ss, u1, u2, uu1, uu2,duu1_positive, duu1, v, vuu2, I, Dx, Dxv,Dy, sDx;
 
 	// cords
-	field_elem x, abs_x ,y,t;
+	field_elem x,y,t;
 
 	int is_canonical, is_negative;
 
@@ -444,7 +421,9 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	is_negative = is_neg_bytes(bytes_in);
 
 	if (is_canonical == 0 || is_negative==1){
-		printf("ristretto255_decode: Bad encoding or neg bytes passed to the ristretto255_decode function! is_canonical=%d, is_negative=%d\n",is_canonical,is_negative);
+		#ifdef DDEBUG_FLAG
+		    printf("ristretto255_decode: Bad encoding or neg bytes passed to the ristretto255_decode function! is_canonical=%d, is_negative=%d\n", is_canonical, is_negative);
+		#endif
 		return 0;
 	}
 
@@ -476,52 +455,50 @@ int ristretto255_decode(ristretto255_point *ristretto_out, const u8 bytes_in[32]
 	fmul(Dy, I, Dxv); // I*Dx*v
 
 	
-
-	// cords
 	// x: |2sDx|
 	fmul(sDx,s,Dx);
 	fadd(x,sDx,sDx); // 2sDx
-
-	if (is_neg(x)){
-		fneg(abs_x,x); // |2sDx|
-
-	}
-	else{
-		fcopy(abs_x,x);
-	}
+	
+	fabsolute(x,x);// |2sDx|
 
 	// y: u1Dy
 	fmul(y,u1,Dy);
 
 	// t: x,y
-	fmul(t,abs_x,y);
+	fmul(t,x,y);
 
-	fcopy(ristretto_out->x, abs_x);
+	fcopy(ristretto_out->x, x);
 	fcopy(ristretto_out->y, y);
 	fcopy(ristretto_out->z, F_ONE);
 	fcopy(ristretto_out->t, t); 
 
 	if (was_square == 0){
-		printf("\n\n\n ristretto255_decode: Bad encoding! was_square=%d \n\n\n",was_square);
-		return 0;
+		#ifdef DEBUG_FLAG
+			printf("\n\n\n ristretto255_decode: Bad encoding! was_square=%d \n\n\n",was_square);
+		#endif
+		return 1;
 	}
 	if (is_neg(t)){
-		printf("\n\n\n ristretto255_decode: Bad encoding! is_neg(t)=%d \n\n\n",is_neg(t));
-		return 0;
+		#ifdef DEBUG_FLAG
+			printf("\n\n\n ristretto255_decode: Bad encoding! is_neg(t)=%d \n\n\n",is_neg(t));
+		#endif
+		return 1;
 	}
 	if (feq(y,F_ZERO)){
-		printf("\n\n\n ristretto255_decode: Bad encoding! feq(y,F_ZERO)=%d \n\n\n",feq(y,F_ZERO));
-		return 0;
+		#ifdef DEBUG_FLAG
+			printf("\n\n\n ristretto255_decode: Bad encoding! feq(y,F_ZERO)=%d \n\n\n",feq(y,F_ZERO));
+		#endif
+		return 1;
 	}
-	return 1;
+	return 0;
 }
 
 
 
 int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* ristretto_in){
 
-	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2, D1D2,Zinv, iX, iY, enchanted_denominator, tZinv;
-	field_elem _X, _Y,_Z, D_inv,XZ_inv,temp_s,s,Z_Y;
+	field_elem temp_zy1,temp_zy2,u1,u2,uu2,u1uu2,I,D1,D2, D1D2,Zinv, iX, iY, enchanted_denominator, tZinv, n_Y;
+	field_elem _X, _Y,_Z,XZ_inv,temp_s,Z_Y;
 
 	fadd(temp_zy1,ristretto_in->z,ristretto_in->y);
 	fsub(temp_zy2,ristretto_in->z,ristretto_in->y);
@@ -546,53 +523,46 @@ int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point* r
 
 	fmul(enchanted_denominator,D1,INVSQRT_A_MINUS_D);
 	fmul(tZinv,ristretto_in->t,Zinv);
+	
+	int is_tZinv_neg = 1-is_neg(tZinv);
+	fcopy(_X,ristretto_in->x);
+	fcopy(_Y,ristretto_in->y);
+	swap25519(iY,_X,is_tZinv_neg);
+	swap25519(iX,_Y,is_tZinv_neg);
+	swap25519(enchanted_denominator,D2,is_tZinv_neg);
 
-
-	if (is_neg(tZinv)){
-		fcopy(_X,iY);
-		fcopy(_Y,iX);
-		fcopy(D_inv,enchanted_denominator);
-		
-	}
-	else{
-		fcopy(_X,ristretto_in->x);
-		fcopy(_Y,ristretto_in->y);
-		fcopy(D_inv,D2);
-	}
 	fcopy(_Z,ristretto_in->z);
 
-	fmul(XZ_inv,_X,Zinv);
+	fmul(XZ_inv,iY,Zinv);
+	
+	fneg(n_Y,iX);
+	fcopy(iX,iX);
+	swap25519(iX,n_Y,is_neg(XZ_inv));
+	
 
-	if (is_neg(XZ_inv)){
-		fneg(_Y,_Y);
-	}
-	else{
-		fcopy(_Y,_Y);
-	}
+	fsub(Z_Y,_Z,iX);
 
-
-	fsub(Z_Y,_Z,_Y);
-
-	fmul(temp_s,D_inv,Z_Y);
-
-	if(is_neg(temp_s)){
-		fneg(s,temp_s);
-	}
-	else{
-		fcopy(s,temp_s);
-	}
-
-	pack25519(bytes_out,s);
+	fmul(temp_s,enchanted_denominator,Z_Y);
 
 
-	return 1;
+	//fcopy(s,temp_s);
+	fabsolute(temp_s,temp_s);
+	
+	pack25519(bytes_out,temp_s);
+
+
+	return 0;
 }
 
 
 
 
-
-int MAP(ristretto255_point* ristretto_out, const field_elem t){
+// MAP function from draft
+// MAP is used in hash_to_group() fuction to get ristretto point from hash
+// Input parameter is field_elem "t"
+// Output is point on Edward's (interpreted as ristretto255_point) curve with coords X,Y,Z,T
+// MAP is also called ristretto255_elligator
+int MAP(ristretto255_point* ristretto_out, const field_elem t){ 
 	field_elem r,u,c,rpd,v,s,s_prime,n, w0,w1,w2,w3,ss,x1,y1,z1,t1;
 	int was_square, wasnt_square;
 
@@ -696,9 +666,15 @@ void ge25519_p1p1_to_p3(ristretto255_point* r,const ristretto255_point* p){
 	fmul(r->t,p->x,p->y);
 
 }
-///
 
 
+// hash_to_group or element derivation function takes hash input and turn it into 
+// valid ristretto point. In this implementation, input is hexa-string (see more below)
+// hash_to_group function consists of 3 steps:
+// 1) divide input into 2 halves and mask both hlaves
+// 2) MAP both halves so u get 2 points represented with X,Y,Z,T coords (Extended edward's coords)
+// 3) perform addition of 2 edward's point, note that we need to add 2 edwards points so fe25519 arithmetics won't fit there
+// we need to use function that adds 2 edwards points
 int hash_to_group(u8 bytes_out[32], const u8 bytes_in[64]){
 	ristretto255_point a_point;
 	ristretto255_point *a = &a_point;
@@ -716,7 +692,7 @@ int hash_to_group(u8 bytes_out[32], const u8 bytes_in[64]){
 	b_copy(t2,bytes_in+32);
 
 	
-	// MASK LSB for each half
+	// MASK LSB for each half, this is equivalent to modulo 2**255
 	t1[31] &= 0x7F;
 	t2[31] &= 0x7F;
 
@@ -727,7 +703,7 @@ int hash_to_group(u8 bytes_out[32], const u8 bytes_in[64]){
 	MAP(a,ft1); // map(ristretto_elligator) first half
 	MAP(b,ft2); // map(ristretto_elligator) second hal
 
-	ge25519_p3_add(r,a,b);
+	ge25519_p3_add(r,a,b); // addition of 2 Edward's point
 
 	ristretto255_encode(bytes_out, r);
 

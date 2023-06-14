@@ -23,11 +23,6 @@ extern const field_elem F_MODULUS;
 extern const field_elem SQRT_M1;
 extern const field_elem EDWARDS_D;
 
-
-void print(field_elem o);
-void print_32(const u8* o);
-void pack_and_print_32(field_elem o);
-
 void unpack25519(field_elem out, const u8 *in);
 void carry25519(field_elem elem);
 void fadd(field_elem out, const field_elem a, const field_elem b);

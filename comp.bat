@@ -1,1 +1,1 @@
-gcc -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe
+gcc -O0 -DDEBUG_FLAG -DVERBOSE_FLAG -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe
