@@ -9,14 +9,14 @@ from libsodium_add import ge25519_p3_add
 # It is not secure nor fast, but can it serves as learning tool for better understanding of ristretto255.
 
 # In this implementation we use python int for internal calculations. 
-# We also implemented conversion routines to convert inteegers into bytes and bernstein's field_elem from tweetNaCl -> (typedef long long i64; typedef i64 field_elem[16];)
+# We also implemented conversion routines to convert inteegers into bytes and bernsteins field_elem from tweetNaCl -> (typedef long long i64; typedef i64 field_elem[16];)
 # Theese converion routines (hexToNum/numToHex) can be used to convert between int/bytes/field_elem
 
 
 # Helpful links:
 # TweetNaCl in datails by Martin Kleppmann : https://martin.kleppmann.com/papers/curve25519.pdf
 # Ristretto255 Draft: https://datatracker.ietf.org/doc/draft-irtf-cfrg-ristretto255-decaf448/
-# Libsodium edward's point addition: https://github.com/jedisct1/libsodium/blob/b7aebe5a1ef46bbb1345e8570fd2e8cea64e587f/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c#L2965
+# Libsodium edwards point addition: https://github.com/jedisct1/libsodium/blob/b7aebe5a1ef46bbb1345e8570fd2e8cea64e587f/src/libsodium/crypto_core/ed25519/ref10/ed25519_ref10.c#L2965
 # Ristretto255-Dona | (u*v^7) ^ {(p-5)/8}: https://github.com/floodyberry/ed25519-donna/blob/master/curve25519-donna-helpers.h
 
 
@@ -28,7 +28,7 @@ from libsodium_add import ge25519_p3_add
 
 # curve25519 == fe25519 ARITHMETIC, ristretto255 uses this internally
 # that means we are using arithmetic modulo P = 2^255 -19
-# fe25519 arithmetic is inspired by Bernstein's TweetNaCl, hence hexToNum/numToHex 
+# fe25519 arithmetic is inspired by Bernsteins TweetNaCl, hence hexToNum/numToHex 
 # conversion were needed to implement.
 
 # negate a, assuming that a is from <0, P-1>
@@ -162,7 +162,7 @@ def inv_sqrt(u,v):
 
 
 # Input: inteeger
-# Output: ristretto point represented as point with X,Y,Z,T (extended edward's coords)
+# Output: ristretto point represented as point with X,Y,Z,T (extended edwards coords)
 def ristretto255_decode(s):
 	ss = (s*s) % P
 	u1 = (1 - ss) % P
@@ -197,17 +197,17 @@ def ristretto255_decode(s):
 
 	if was_square == False:
 		print("Decoding fails")
-		MSG(f'was_square = {was_square}')
+		MSG(fwas_square = {was_square})
 		#raise ValueError
 
 	if is_neg(t):
 		print("Decoding fails")
-		MSG(f't = {is_neg(t)}')
+		MSG(ft = {is_neg(t)})
 		#raise ValueError
 
 	if y==0:
 		print("Decoding fails")
-		MSG(f'y = {y}')
+		MSG(fy = {y})
 		#raise ValueError
 
 
@@ -215,7 +215,7 @@ def ristretto255_decode(s):
 
 
 
-# Input: ristretto point represented as point with X,Y,Z,T (extended edward's coords)
+# Input: ristretto point represented as point with X,Y,Z,T (extended edwards coords)
 # Output: inteeger, which can be then converted into bytes (check numToHex() in convertLib.py)
 def ristretto255_encode(X,Y,Z,T):
 
@@ -268,7 +268,7 @@ def ristretto255_encode(X,Y,Z,T):
 # MAP function from draft
 # MAP is used in hash_to_group() fuction to get ristretto point from hash
 # Input parameter is inteeger "t"
-# Output is point on Edward's curve with coords X,Y,Z,T, which in our internal representation is
+# Output is point on Edwards curve with coords X,Y,Z,T, which in our internal representation is
 # touple(int,int,int,int)
 def MAP(t): # also known as ristretto255_elligator
 
@@ -325,8 +325,8 @@ def MAP(t): # also known as ristretto255_elligator
 # valid ristretto point. In this implementation, input is hexa-string (see more below)
 # hash_to_group function consists of 3 steps:
 # 1) divide input into 2 halves and mask both hlaves
-# 2) MAP both halves so u get 2 points represented with X,Y,Z,T coords (Extended edward's coords)
-# 3) perform addition of 2 edward's point, note that we need to add 2 edwards points so fe25519 arithmetics won't fit there
+# 2) MAP both halves so u get 2 points represented with X,Y,Z,T coords (Extended edwards coords)
+# 3) perform addition of 2 edwards point, note that we need to add 2 edwards points so fe25519 arithmetics wont fit there
 # we need to use function that adds 2 edwards points
 def hash_to_group(input):
 	# divide input into 2 halves, note that "input" paarameter needs to be in hexa-string
@@ -339,7 +339,7 @@ def hash_to_group(input):
 	a = MAP(t1) # map(ristretto_elligator) first half
 	b = MAP(t2) # map(ristretto_elligator) second half 
 
-	# a + b, this is addition of 2 points on edward's curve 
+	# a + b, this is addition of 2 points on edwards curve 
 	# inspired by C cryptographic library "libsodium"
 	# note that output "r" has coords X,Y,Z,T
 	r = ge25519_p3_add(a,b) # add from libsodium -> libsodium_add.py
@@ -352,12 +352,53 @@ def hash_to_group(input):
 	numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
 	#numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
 
-	return R
-
-
+	return r
+"""
+a = 0
 HASH_VECTOR = vectors.INPUT_VECTORS_HASH_TO_GROUP_STATIC_HEXSTRING # vector from vectors.py	
 for i in HASH_VECTOR:
 	#print([hex(j) for j in bytes.fromhex(i)],",")
-	hash_to_group(i)
+	a=hash_to_group(i)
+"""
+def swap25519(a,b,c):
+	a,b = (b,a) if c else (a,b)
+	return a,b
 
-print(len(HASH_VECTOR))
+# NOTE: that p,q are ristretto255 points (X,Y,Z,T)
+def cswaps(p,q,b):
+	X1,Y1,Z1,T1 = p
+	X2,Y2,Z2,T2 = q
+	X1,X2 = swap25519(X1,X2,b)
+	Y1,Y2 = swap25519(Y1,Y2,b)
+	Z1,Z2 = swap25519(Z1,Z2,b)
+	T1,T2 = swap25519(T1,T2,b)
+	return (X1,Y1,Z1,T1),(X2,Y2,Z2,T2)
+
+# NOTE: that s is int, and q is ristretto point (X,Y,Z,T)
+def ristretto255_scalarmult(q,s):
+	s = numToHex(s,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+	p = 0,1,1,0
+	b=[]
+	for i in range(255-1,-1,-1):
+		b = (s[i//8]>>(i&7))&1;
+		p,q = cswaps(p,q,b)
+		q=ge25519_p3_add(q,p)
+		p=ge25519_p3_add(p,p)
+		p,q = cswaps(p,q,b)
+	return p
+
+
+GEN = [0xe2, 0xf2, 0xae, 0xa, 0x6a, 0xbc, 0x4e, 0x71, 0xa8, 0x84, 0xa9, 0x61,0xc5, 0x0, 0x51, 0x5f,0x58, 0xe3, 0xb, 0x6a, 0xa5, 0x82, 0xdd, 0x8d, 0xb6, 0xa6, 0x59, 0x45, 0xe0, 0x8d, 0x2d, 0x76]
+GEN_int = hexToNum(GEN,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+for i in range(16):
+	GEN_ristretto255_point = ristretto255_decode(GEN_int)
+	q = ristretto255_scalarmult(GEN_ristretto255_point,i)
+	q_encoded = ristretto255_encode(*q)
+	numToHex(q_encoded,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+
+
+
+
+
+
+

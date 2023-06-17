@@ -1,3 +1,6 @@
+#ifndef _CONSTANTS_H
+#define _CONSTANTS_H
+
 // little-endian order --> a = a0*2^0 + a1*2^16 + a2*2^32 + ... + a15*2^240 (vzdy o ax*2^ o15 vyssie)
 const field_elem F_ZERO = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 const field_elem F_ONE = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -70,3 +73,5 @@ const field_elem SQRT_AD_MINUS_ONE = {
 	0xd1fd, 0x31f5, 0xfcc9, 0xf3c,
 	0x48ac, 0x2b83, 0x31bf, 0x3769
 };
+
+#endif //_CONSTANTS_H

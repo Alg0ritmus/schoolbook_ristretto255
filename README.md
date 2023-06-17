@@ -3,13 +3,25 @@ Python - `python test.py`(windows) <br>
 C - `comp.bat`(windows) <br>
 # Progress:
 
+## 17.6.2023
+Vytvoril som skalarny sucin pre ristretto255 body (t.j. ristretto255_point * scalar). Doplnil som automatizovane jednotkove testy pre tento sucin(main.c).<br>  
+Pri implementacii skalarneho sucinu som sa inspiroval [kodom z tweetNaCl](https://github.com/dominictarr/tweetnacl/blob/master/tweetnacl.c#L632).<br>
+Nasledne som skalarny sucin implementoval aj do Pythonu a otestoval.<br>
+<br>
+Kozmeticke upravy & debugging:<br>
+1) Bol fixnuty bug pri jednotkovych testoch, od teraz (pri prepinaci `-DVERBOUS_FLAG`) mozeme vidiet ktory vektor nepresiel testom. Doteraz to bolo tak, ze ak nastala chyba pri nejakom vektore, vsetky ostatne boli vyhodnotene ako FAIL.<br>
+2) Bol pridany `utils.c` -> odseparoval som definiciu a deklaraciu do separatnych suborov.<br>
+3) `ristretto255.h` od teraz obsahuje len uzivatelovi pristupne funkcie, vsetky ostatne funckie su deklarovane ako staticke (vid. `ristretto255.c`).<br>
+
+ <br>
+
 ## 14.6.2023
 Doplnil som automatizovane jednotkove testy v maine a taktiez som pridal prepinac na vypis jednotlivych testov (-DVERBOSE_FLAG) spolu <br>
 s prepinacom na chybove hlasky, ktore sa vyskytuju v pripade roznych chyb ktore mozu nastat napr. pri ristretto255_decode (-DDEBUG_FLAG).<br>
 Prepinace (v subore comp.bat) by mohli vyzerat nejak takto: <br>
 1) `gcc -O0 -DDEBUG_FLAG  -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe`<br>
-2)`gcc -O0 -DDEBUG_FLAG  -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe`<br>
-3)`gcc -O0 -DVERBOUS_FLAG -DDEBUG_FLAG  -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe`<br>
+2) `gcc -O0 -DVERBOUS_FLAG  -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe`<br>
+3) `gcc -O0 -DVERBOUS_FLAG -DDEBUG_FLAG  -Wall -Wno-unused-value -Wextra -o main main.c ristretto255.c && main.exe`<br>
 
 Co sa tyka CT(constant time) funkcii:<br>
 1) upravil som funkciu fabsolute, tak aby pracovala v konstantnom case<br>
@@ -19,7 +31,7 @@ Co sa tyka CT(constant time) funkcii:<br>
 
 
 ## 10.6.2023
-Uspesne som implementoval som funkciu hash_to_group a otestoval pomocou testovacich vektorov z draftu aj pre jazyk C. Trochu som kod precistil <br>
+Uspesne som implementoval funkciu hash_to_group a otestoval ju pomocou testovacich vektorov z draftu aj pre jazyk C. Trochu som kod precistil a vyhodil co netreba. <br>
 Dalsim krokom bude re-implementovat niektore funkcie ako vykonavali ukony v konstantnom case (napr absolut. hodnota + implementovat (CT_SELECT, CT_EQ, CT_NEG, CT_ABS)).<br>
 
  <br>

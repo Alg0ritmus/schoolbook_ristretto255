@@ -13,7 +13,6 @@ typedef struct ge_point25519{
 
 
 
-// CONSTANTS
 extern const field_elem F_ZERO;
 extern const field_elem F_ONE;
 extern const field_elem F_TWO;
@@ -23,50 +22,28 @@ extern const field_elem F_MODULUS;
 extern const field_elem SQRT_M1;
 extern const field_elem EDWARDS_D;
 
-void unpack25519(field_elem out, const u8 *in);
-void carry25519(field_elem elem);
-void fadd(field_elem out, const field_elem a, const field_elem b);
-void fsub(field_elem out, const field_elem a, const field_elem b);
-void fmul(field_elem out, const field_elem a, const field_elem b);/* out = a * b */
-void finverse(field_elem out, const field_elem in);
-void swap25519(field_elem p, field_elem q, int bit);
-void pack25519(u8 *out, const field_elem in);
-void scalarmult(u8 *out, const u8 *scalar, const u8 *point);
 
-// mine funkcie
+// helper functions (mostly tweeked tweetNaCl)
+void unpack25519(field_elem out, const u8 *in);
+void pack25519(u8 *out, const field_elem in);
+
+// mine functions
 void fcopy(field_elem out, const field_elem in);
 void b_copy(u8 out[32], const u8 in[32]);
-void fneg(field_elem out, const field_elem in);
-void pow2(field_elem out, const field_elem a);
-void pow3(field_elem out, const field_elem a);
-void pow7(field_elem out, const field_elem a);
-void pow_xtimes(field_elem out, const field_elem a, int n);
-void curve25519_pow_two5mtwo0_two250mtwo0(field_elem b);
-// je mozne nahradit tymto kodom (sv pow2523)?
-// https://github.com/sbp/tweetnacl-tools/blob/master/tweetnacl.c#L382 
-void curve25519_pow_two252m3(field_elem two252m3, const field_elem z);
-int inv_sqrt(field_elem out,const field_elem u, const field_elem v);
 int feq( const field_elem a,  const field_elem b); // return 1 if two are equal, otherwise 0
 int bytes_eq_32( const unsigned char a[32],  const unsigned char b[32]); // return 1 if two are equal, otherwise 0
 void fabsolute(field_elem out, const field_elem in);
 
-// funguje???
+
 void fneg(field_elem out, const field_elem in);
 int is_neg(const field_elem in); // return 1 if it's negative
-
-// is negative ?
-// https://github.com/jedisct1/libsodium/blob/master/src/libsodium/include/sodium/private/ed25519_ref10_fe_51.h#L243
-
-// ristretto functions
+int is_neg_bytes(const u8 in[32]);
 
 int ristretto255_decode(ristretto255_point *ristretto_out, const unsigned char bytes_in[32]);
 int ristretto255_encode(unsigned char bytes_out[32], const ristretto255_point *ristretto_in);
-
-int MAP(ristretto255_point* ristretto_out, const field_elem t);
-void ge25519_p3_add(ristretto255_point* r,const ristretto255_point* p,const ristretto255_point* q);
-void ge25519_p3_to_cached(ristretto255_point* p_out,const ristretto255_point* p);
-void ge25519_add_cached(ristretto255_point* r,const ristretto255_point* p,const ristretto255_point* q);
-void ge25519_p1p1_to_p3(ristretto255_point* r,const ristretto255_point* p);
 int hash_to_group(u8 bytes_out[32], const u8 bytes_in[64]);
+void ristretto255_scalarmult(ristretto255_point* p, ristretto255_point* q,const u8 *s);
 
-#endif //_RISTRETTO255_H
+
+
+#endif //_HELPERS_H
