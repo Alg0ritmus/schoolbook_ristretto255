@@ -1,5 +1,4 @@
 #include "ristretto255.h"
-#include "helpers.h"
 #include "utils.h"
 void print(field_elem o){
 

@@ -2,7 +2,6 @@
 #define _UTILS_H
 
 #include "ristretto255.h"
-#include "helpers.h"
 /*		UTILS		*/
 void print(field_elem o);
 
