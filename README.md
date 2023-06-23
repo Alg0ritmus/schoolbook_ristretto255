@@ -3,6 +3,21 @@ Python - `python test.py`(windows) <br>
 C - `comp.bat`(windows) <br>
 # Progress:
 
+## 23.6.2023
+BIG CHANGES!!<br>
+V tomto update som pridal konstanty ako napr. FIELED_ELEM_SIZE (vid. `ristretto255.h`).<br>
+Pridal a otestoval som inverziu mod L inspirovanu kniznicou Monocypher.<br>
+Ristretto konstanty boli presunute do ristretto255, od teraz su deklarovane ako staticke premenne.<br>
+Funkcie, kt. vyuzivali velke mnozstvo premenny som optimalizoval z hladiska pamate (problem so zasobnikom).<br>
+Doslo k vymene funkcii pre scitanie 2 ristretto bodov (predtym inspirovane libsodiom, teraz su z tweetNaCl).<br>
+Podobne doslo k vymene funkcie pre vypocet  a^(2^523), predtym ristertto-donna, teraz tweetNaCl.<br>
+Vsetky kody, kt. su z tweetNaCl su od teraz vyznacene komentarom a mozu sa od povodnej impl.<br>
+lisit najma zmenou nazvu funkcie alebo preskupenim krokov vo vypocte (napr. kvoli optimalizacii spomenutej vyssie).<br>
+Ku kazdej funkcii je napisane zhruba kolko dana funkcia vnutorne "vyuziva pamate",<br>
+(nie v bajtoch ale pocet dannych premenntych vid. `ristretto255.c`).<br>
+
+Precistil som kod, nahradil TABS medzerami a preskupil nejake funkcie atd.<br>
+
 ## 17.6.2023
 Vytvoril som skalarny sucin pre ristretto255 body (t.j. ristretto255_point * scalar). Doplnil som automatizovane jednotkove testy pre tento sucin(main.c).<br>  
 Pri implementacii skalarneho sucinu som sa inspiroval [kodom z tweetNaCl](https://github.com/dominictarr/tweetnacl/blob/master/tweetnacl.c#L632).<br>
