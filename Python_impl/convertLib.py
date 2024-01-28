@@ -16,7 +16,7 @@ NUMBER_INTERPRETATION_CHOICES = {
 # hexToNum(input,NUMBER_INTERPRETATION_CHOICES["16x16"],False) -> set b=False if you dont want to print result
 # hexToNum(input,NUMBER_INTERPRETATION_CHOICES["16x16"],True) -> set b=True if you want to print result
 # if useed properly we can use it for unpack25519/pack25519 convertion compatible with TweetNaCl
-def hexToNum(input, interpret, b):
+def hexToNum(input, interpret = NUMBER_INTERPRETATION_CHOICES["32x8"]):
     sum = 0
 
     for i in range(interpret[0]):
@@ -103,7 +103,7 @@ def hash_to_num(str_hash):
     a = [i for i in a]
     b = [i for i in b]
 
-    a = hexToNum(a, NUMBER_INTERPRETATION_CHOICES["32x8"], True)
-    b = hexToNum(b, NUMBER_INTERPRETATION_CHOICES["32x8"], True)
+    a = hexToNum(a, NUMBER_INTERPRETATION_CHOICES["32x8"])
+    b = hexToNum(b, NUMBER_INTERPRETATION_CHOICES["32x8"])
 
     return (a, b)

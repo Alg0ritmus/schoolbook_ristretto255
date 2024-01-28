@@ -201,17 +201,17 @@ def ristretto255_decode(s):
 	if was_square == False:
 		print("Decoding fails")
 		MSG(fwas_square = {was_square})
-		#raise ValueError
+		raise ValueError
 
 	if is_neg(t):
 		print("Decoding fails")
 		MSG(ft = {is_neg(t)})
-		#raise ValueError
+		raise ValueError
 
 	if y==0:
 		print("Decoding fails")
 		MSG(fy = {y})
-		#raise ValueError
+		raise ValueError
 
 
 	return (abs_x,y,1,t)
@@ -417,7 +417,7 @@ def Xoruj(a,b):
 	decorator(skuska)
 	return skuska
 
-Lnum = hexToNum(L,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+Lnum = hexToNum(L,NUMBER_INTERPRETATION_CHOICES["32x8"])
 
 def mul_l(a,b):
 		return (a*b) % (Lnum + 2)
@@ -462,7 +462,7 @@ print("TEST OUTPUT")
 # TESTING A.1 -> small multiples of generator
 TEST_RESULT = 1
 GEN = [0xe2, 0xf2, 0xae, 0xa, 0x6a, 0xbc, 0x4e, 0x71, 0xa8, 0x84, 0xa9, 0x61,0xc5, 0x0, 0x51, 0x5f,0x58, 0xe3, 0xb, 0x6a, 0xa5, 0x82, 0xdd, 0x8d, 0xb6, 0xa6, 0x59, 0x45, 0xe0, 0x8d, 0x2d, 0x76]
-GEN_int = hexToNum(GEN,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+GEN_int = hexToNum(GEN,NUMBER_INTERPRETATION_CHOICES["32x8"])
 for i in range(16):
 	GEN_ristretto255_point = ristretto255_decode(GEN_int)
 	q = ristretto255_scalarmult(GEN_ristretto255_point,i)
@@ -471,6 +471,8 @@ for i in range(16):
 	print(TEST_RESULT)
 print("vysledok po small mult",TEST_RESULT)
 
+
+# testing hash_to_group
 a = 0
 HASH_VECTOR = vectors.INPUT_VECTORS_HASH_TO_GROUP_STATIC_HEXSTRING # vector from vectors.py	
 for i,vec in enumerate(HASH_VECTOR):
@@ -480,4 +482,55 @@ for i,vec in enumerate(HASH_VECTOR):
 	print(TEST_RESULT)
 print("vysledok po hash to group",TEST_RESULT)
 
-# testing hash_to_group
+
+# testing if vector is negative 
+for i in range(8):
+	vec = hexToNum(vectors.test_negative_vectors[i])
+	TEST_RESULT &= is_neg(vec)
+	print(TEST_RESULT)
+print("vysledok po testing if vector is negativ",TEST_RESULT)
+
+#testing if vector is P-negative is positive 
+for i in range(8):
+	vec = hexToNum(vectors.test_negative_vectors_compl[i])
+	TEST_RESULT &= 1-is_neg(vec)
+	print(TEST_RESULT)
+print("vysledok po testing if vector is P-negative is positive",TEST_RESULT)
+
+#testing non-canonical vectors -> should result in error during decoding
+for i in range(4):
+	vec = hexToNum(vectors.non_canonical_vectors[i])
+	try:
+		ristretto255_decode(vec)
+		TEST_RESULT &= 0
+	except Exception as e:
+		if e == ValueError:
+			TEST_RESULT &= 1
+	print(TEST_RESULT)
+print("vysledok po testing non-canonical vectors",TEST_RESULT)
+	
+#testing Non-square x^2 vectors -> should result in error during decoding
+for i in range(8):
+	vec = hexToNum(vectors.non_square_x2[i])
+	try:
+		ristretto255_decode(vec)
+		TEST_RESULT &= 0
+	except Exception as e:
+		if e == ValueError:
+			TEST_RESULT &= 1
+	print(TEST_RESULT)
+print("vysledok po testing Non-square x^2 vectors",TEST_RESULT)
+
+#testing Negative xy value vectors -> should result in error during decoding
+for i in range(8):
+	vec = hexToNum(vectors.negative_xy[i])
+	try:
+		ristretto255_decode(vec)
+		TEST_RESULT &= 0
+	except Exception as e:
+		if e == ValueError:
+			TEST_RESULT &= 1
+	print(TEST_RESULT)
+print("vysledok po testing Negative xy value vectors",TEST_RESULT)
+
+MSG(f'Final Test result: {"SUCCESS" if TEST_RESULT else "FAIL"}')
