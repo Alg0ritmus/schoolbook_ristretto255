@@ -1,9 +1,7 @@
 from convertLib import * # all conversions needed are implemented here
 from constants import * # constants from draft
-import vectors
-
 from libsodium_add import ge25519_p3_add
-
+import vectors
 # This is an school_book/prototype implementation of ristretto255 writen purely in Python.
 # Warning: this implementation is not suitable for production by any means.
 # It is not secure nor fast, but can it serves as learning tool for better understanding of ristretto255.
@@ -33,7 +31,11 @@ from libsodium_add import ge25519_p3_add
 
 # negate a, assuming that a is from <0, P-1>
 def fneg(a):
-	return (P-a)
+	if False:
+		return (P-a)
+	else:
+		a = a % X
+		return (X-a)
 
 # return absolute value of x
 def fabs(x):
@@ -41,6 +43,7 @@ def fabs(x):
 	
 # true if a is negative, flase otherwise	
 def is_neg(a):
+	a = a % X
 	arr_a = numToHex(a,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
 	return arr_a[0] & 1
 
@@ -139,9 +142,9 @@ def inv_sqrt(u,v):
 	u_neg_i = (u_neg*SQRT_M1) % P
 
 
-	correct_sign_sqrt = (check == u);
-	flipped_sign_sqrt = (check == u_neg);
-	flipped_sign_sqrt_i = (check == u_neg_i);
+	correct_sign_sqrt = (check == u)
+	flipped_sign_sqrt = (check == u_neg)
+	flipped_sign_sqrt_i = (check == u_neg_i)
 
 
 	r_prime = (r2*SQRT_M1) % P
@@ -349,17 +352,13 @@ def hash_to_group(input):
 	# convert and print result, note that "R" is inteeger in our internal representation
 	# so conversion is needed to get bytes [32x8] or [16x16]
 	# for more details about conversion please check convertionLib.py 
-	numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	r_bytes = numToBytes(R,NUMBER_INTERPRETATION_CHOICES["32x8"])
 	#numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
 
-	return r
-"""
-a = 0
-HASH_VECTOR = vectors.INPUT_VECTORS_HASH_TO_GROUP_STATIC_HEXSTRING # vector from vectors.py	
-for i in HASH_VECTOR:
-	#print([hex(j) for j in bytes.fromhex(i)],",")
-	a=hash_to_group(i)
-"""
+	return r,r_bytes
+
+
+
 def swap25519(a,b,c):
 	a,b = (b,a) if c else (a,b)
 	return a,b
@@ -380,25 +379,105 @@ def ristretto255_scalarmult(q,s):
 	p = 0,1,1,0
 	b=[]
 	for i in range(255-1,-1,-1):
-		b = (s[i//8]>>(i&7))&1;
+		b = (s[i//8]>>(i&7))&1
 		p,q = cswaps(p,q,b)
 		q=ge25519_p3_add(q,p)
 		p=ge25519_p3_add(p,p)
 		p,q = cswaps(p,q,b)
 	return p
 
+L =  [0xeb, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
+        0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10]
 
+def decorator(f):
+	print("-------------")
+	print(f)
+	print("-------------")
+
+def scalar_bit(in_a, i):
+	in_a_str = bin(in_a)[2::][::-1]
+	if i<0:
+		return 0
+	return int(in_a_str[i])
+
+def Xoruj(a,b):
+	# a xor b
+	if len(a)!=len(b):
+		raise ValueError(f"a:{len(a)} in not eq to b{len(b)}")
+	if not isinstance(a[0],int):
+		a = [int(i,16) for i in a]
+	if not isinstance(b[0],int):
+		b = [int(i,16) for i in b]
+
+
+	skuska = [a[i]^b[i] for i in range(len(a))]
+	
+	decorator(skuska)
+	return skuska
+
+Lnum = hexToNum(L,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+
+def mul_l(a,b):
+		return (a*b) % (Lnum + 2)
+
+def inverse_mod_l(a_in):
+	m_inv = 1
+
+	for i in range(252,-1,-1):
+		m_inv = mul_l(m_inv,m_inv)
+
+		if scalar_bit(Lnum,i):
+			m_inv = mul_l(m_inv,a_in)
+
+	return m_inv
+
+"""
+IN_hex = [255 for i in range(32)]
+k = [0x57 for i in range(32)]
+k_num = hexToNum(k,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+IN = hexToNum(IN_hex,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+
+print("TEST")
+for i in range(1000):
+	r = inverse_mod_l(IN)
+
+	r_32 = numToHex(r,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+	#print(r_32)
+	
+	IN = hexToNum(Xoruj(r_32,k),NUMBER_INTERPRETATION_CHOICES["32x8"],False)
+
+numToHex(IN,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+print("TEST OUTPUT")
+
+
+#a = mul_l(IN,IN)
+#r = inverse_mod_l(IN)
+#numToHex(r,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+"""
+
+## TESTS
+
+# TESTING A.1 -> small multiples of generator
+TEST_RESULT = 1
 GEN = [0xe2, 0xf2, 0xae, 0xa, 0x6a, 0xbc, 0x4e, 0x71, 0xa8, 0x84, 0xa9, 0x61,0xc5, 0x0, 0x51, 0x5f,0x58, 0xe3, 0xb, 0x6a, 0xa5, 0x82, 0xdd, 0x8d, 0xb6, 0xa6, 0x59, 0x45, 0xe0, 0x8d, 0x2d, 0x76]
 GEN_int = hexToNum(GEN,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
 for i in range(16):
 	GEN_ristretto255_point = ristretto255_decode(GEN_int)
 	q = ristretto255_scalarmult(GEN_ristretto255_point,i)
 	q_encoded = ristretto255_encode(*q)
-	numToHex(q_encoded,NUMBER_INTERPRETATION_CHOICES["32x8"],True)
+	TEST_RESULT  &= numToBytes(q_encoded,NUMBER_INTERPRETATION_CHOICES["32x8"]) == vectors.SMALL_MULTIPLES_OF_GENERATOR_VECTORS[i]
+	print(TEST_RESULT)
+print("vysledok po small mult",TEST_RESULT)
 
+a = 0
+HASH_VECTOR = vectors.INPUT_VECTORS_HASH_TO_GROUP_STATIC_HEXSTRING # vector from vectors.py	
+for i,vec in enumerate(HASH_VECTOR):
+	#print([hex(j) for j in bytes.fromhex(i)],",")
+	_, r_bytes=hash_to_group(vec)
+	TEST_RESULT  &= r_bytes == vectors.OUTPUT_VECTORS_HASH_TO_GROUP_BYTES[i]
+	print(TEST_RESULT)
+print("vysledok po hash to group",TEST_RESULT)
 
-
-
-
-
-
+# testing hash_to_group

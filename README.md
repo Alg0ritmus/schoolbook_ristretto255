@@ -3,6 +3,12 @@ Python - `python test.py`(windows) <br>
 C - `comp.bat`(windows) <br>
 # Progress:
 
+## 27.1.2024
+v referencnej python impl. sme otestovali techniku modulo 2P
+a na vhodne miesta dosadili redukciu...
+redukcia bola dosadena do:
+fneg() a is_neg funkcie
+
 ## 23.6.2023
 BIG CHANGES!!<br>
 V tomto update som pridal konstanty ako napr. FIELED_ELEM_SIZE (vid. `ristretto255.h`).<br>
