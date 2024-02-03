@@ -29,21 +29,28 @@ import vectors
 # fe25519 arithmetic is inspired by Bernsteins TweetNaCl, hence hexToNum/numToHex 
 # conversion were needed to implement.
 
+
+def emil_red(a):
+	return a % REDUCE
+
+
 # negate a, assuming that a is from <0, P-1>
 def fneg(a):
-	if False:
-		return (P-a)
-	else:
-		a = a % X
-		return (X-a)
+	if use25519:
+		return P-a
+	a = a % REDUCE
+	return (REDUCE-a)
+
 
 # return absolute value of x
 def fabs(x):
+	x = emil_red(x)
 	return fneg(x) if is_neg(x) else x
 	
 # true if a is negative, flase otherwise	
 def is_neg(a):
-	a = a % X
+	#if not use25519:
+		#a = a % REDUCE
 	arr_a = numToHex(a,NUMBER_INTERPRETATION_CHOICES["32x8"],False)
 	return arr_a[0] & 1
 
@@ -141,6 +148,9 @@ def inv_sqrt(u,v):
 	u_neg = fneg(u)
 	u_neg_i = (u_neg*SQRT_M1) % P
 
+	check = emil_red(check)
+	u = emil_red(u)
+	u_neg_i = emil_red(u_neg_i)
 
 	correct_sign_sqrt = (check == u)
 	flipped_sign_sqrt = (check == u_neg)
@@ -154,6 +164,7 @@ def inv_sqrt(u,v):
 	if should_rotate:
 		r2 = r_prime
 
+	r2 = emil_red(r2)
 	r_is_negative = is_neg(r2)
 	r_negative = fneg(r2)
 
@@ -167,6 +178,15 @@ def inv_sqrt(u,v):
 # Input: inteeger
 # Output: ristretto point represented as point with X,Y,Z,T (extended edwards coords)
 def ristretto255_decode(s):
+	#check if cannonical
+	a =  numToHex(s)
+	aa = hexToNum(a)
+	if aa!=s or is_neg(s):
+		print("Decoding fails, is can:",aa==s,"neg:",is_neg(s))
+		MSG(f'non-canonical input')
+		raise ValueError
+
+
 	ss = (s*s) % P
 	u1 = (1 - ss) % P
 	u2 = (1 + ss) % P
@@ -189,7 +209,7 @@ def ristretto255_decode(s):
 	sDx = (s*Dx) % P
 	x = (sDx+sDx) % P
 
-
+	x = emil_red(x)
 	if is_neg(x):
 		abs_x = fneg(x)
 	else:
@@ -200,19 +220,22 @@ def ristretto255_decode(s):
 
 	if was_square == False:
 		print("Decoding fails")
-		MSG(fwas_square = {was_square})
+		MSG(f'was_square = {was_square}')
 		raise ValueError
 
+	t = emil_red(t)
 	if is_neg(t):
 		print("Decoding fails")
-		MSG(ft = {is_neg(t)})
+		MSG(f't = {is_neg(t)}')
 		raise ValueError
 
 	if y==0:
 		print("Decoding fails")
-		MSG(fy = {y})
+		MSG(f'y = {y}')
 		raise ValueError
 
+	if not use25519:
+		return (abs_x,y%REDUCE,1,t%REDUCE)
 
 	return (abs_x,y,1,t)
 
@@ -239,7 +262,7 @@ def ristretto255_encode(X,Y,Z,T):
 
 	tZinv = (T*Zinv) % P
 
-
+	tZinv = emil_red(tZinv)
 	if is_neg(tZinv):
 		X = iY
 		Y = iX
@@ -252,6 +275,7 @@ def ristretto255_encode(X,Y,Z,T):
 	Z = Z
 
 	XZ_inv = (X * Zinv) % P
+	XZ_inv = emil_red(XZ_inv)
 	if is_neg(XZ_inv):
 		Y = fneg(Y)
 	else:
@@ -259,13 +283,15 @@ def ristretto255_encode(X,Y,Z,T):
 
 	temp_s = (D_inv * ((Z-Y)%P) ) % P
 
+	temp_s = emil_red(temp_s)
 	if is_neg(temp_s):
 		s = fneg(temp_s)
 	else:
 		s = temp_s
 	
-
-	return s 
+	if not use25519:
+		return s % REDUCE
+	return s
 
 
 # MAP function from draft
@@ -315,12 +341,20 @@ def MAP(t): # also known as ristretto255_elligator
 	w2 = (1 - ss ) % P
 	w3 = (1 + ss) % P
 
+	if not use25519:
+		return (
+			((w0*w3) % REDUCE),
+			((w2*w1) % REDUCE),
+			((w1*w3) % REDUCE),
+			((w0*w2) % REDUCE) 
+			)
+	
 	return (
-		((w0*w3) % P),
-		((w2*w1) % P),
-		((w1*w3) % P),
-		((w0*w2) % P) 
-		)
+			((w0*w3) % P),
+			((w2*w1) % P),
+			((w1*w3) % P),
+			((w0*w2) % P) 
+			)
 
 
 
@@ -352,7 +386,7 @@ def hash_to_group(input):
 	# convert and print result, note that "R" is inteeger in our internal representation
 	# so conversion is needed to get bytes [32x8] or [16x16]
 	# for more details about conversion please check convertionLib.py 
-	r_bytes = numToBytes(R,NUMBER_INTERPRETATION_CHOICES["32x8"])
+	r_bytes = numToHex(R,NUMBER_INTERPRETATION_CHOICES["32x8"])
 	#numToHex(R,NUMBER_INTERPRETATION_CHOICES["16x16"],True)
 
 	return r,r_bytes
@@ -467,7 +501,7 @@ for i in range(16):
 	GEN_ristretto255_point = ristretto255_decode(GEN_int)
 	q = ristretto255_scalarmult(GEN_ristretto255_point,i)
 	q_encoded = ristretto255_encode(*q)
-	TEST_RESULT  &= numToBytes(q_encoded,NUMBER_INTERPRETATION_CHOICES["32x8"]) == vectors.SMALL_MULTIPLES_OF_GENERATOR_VECTORS[i]
+	TEST_RESULT  &= numToHex(q_encoded,NUMBER_INTERPRETATION_CHOICES["32x8"]) == vectors.SMALL_MULTIPLES_OF_GENERATOR_VECTORS[i]
 	print(TEST_RESULT)
 print("vysledok po small mult",TEST_RESULT)
 

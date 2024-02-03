@@ -32,10 +32,10 @@ def ge25519_add_cached(p,q):
 
 def ge25519_p1p1_to_p3(p):
 	r = [0,0,0,0]
-	r[0] = (p[0] * p[3]) % P
-	r[1] = (p[1] * p[2]) % P
-	r[2] = (p[2] * p[3]) % P
-	r[3] = (p[0] * p[1]) % P
+	r[0] = (p[0] * p[3]) % REDUCE
+	r[1] = (p[1] * p[2]) % REDUCE
+	r[2] = (p[2] * p[3]) % REDUCE
+	r[3] = (p[0] * p[1]) % REDUCE
 	return tuple(r)
 
 # input body (x,y,z,t)
