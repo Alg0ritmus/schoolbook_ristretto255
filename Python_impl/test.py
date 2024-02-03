@@ -181,7 +181,9 @@ def ristretto255_decode(s):
 	#check if cannonical
 	a =  numToHex(s)
 	aa = hexToNum(a)
-	if aa!=s or is_neg(s):
+	# due to tests, we need to check raw input not input after modulo adjustment, 
+	# therefore we cant do reduction inside is_neg() function !!!
+	if aa!=s or is_neg(s): 
 		print("Decoding fails, is can:",aa==s,"neg:",is_neg(s))
 		MSG(f'non-canonical input')
 		raise ValueError
